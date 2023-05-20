@@ -1,0 +1,22 @@
+# TODO:update the proxy script .
+# show and set proxy for WSL
+function GetHostIp(){
+  ip=$(cat /etc/resolv.conf|grep nameserver|awk '{print $2}')
+  echo "the host ip is: $ip, then we ping it to test fireware"
+  ping $ip
+}
+
+function SetProxy(){
+  ip=$(cat /etc/resolv.conf|grep nameserver|awk '{print $2}')
+  export http_proxy=http://$ip:8890
+  export https_proxy=https://$ip:8890
+}
+
+function unsetProxy(){
+  unset http_proxy
+  unset https_proxy
+}
+ 
+alias getip=GetHostIp
+alias proxyon=SetProxy
+alias proxyoff=unsetProxy
