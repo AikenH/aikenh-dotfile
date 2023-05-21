@@ -1,0 +1,315 @@
+" ********************************************************************
+" @aikenhong
+" rewrite vimrc in 20230521, this time we want make it sticky(keep update).
+" default place of vimrc is /usr/share/share/vim/vimrc & ~/.vimrc(top)
+" echo $MYVIMRC will show which config file we used.
+" if we want to choose specific config file. usingf vim -u <dotfile>
+" *********************************************************************
+" references:
+" https://www.ruanyifeng.com/blog/2018/09/vimrc.html
+" https://dougblack.io/words/a-good-vimrc.html
+" https://segmentfault.com/a/1190000021029480
+" https://zhuanlan.zhihu.com/p/98360630
+
+" -----------------------0.vim Basic Setting{{{------------------------
+" >>0-0 basic info.
+let mapleader="\<space>"
+set nocompatible " no compatible with vi, just using vimscript
+set encoding=utf-8 "set the basic encoding
+set lazyredraw " redraw only when we need to.
+set backspace=indent,eol,start " help to del special character.(or =2)
+
+syntax enable
+syntax on " enable syntax processing
+
+" >>0-1 state detection.
+set autoread " when file change outside, we will know
+set autochdir " change workspace when we swtich file, when we open multi-file in one session.
+
+" >>0-2 keep file history
+set noswapfile " donot create .swp file
+set undofile " keep the undo history in file.
+set undodir=~/.vim/.undo//
+set history=1000 " how many operation vim should record
+"}}}
+
+" -----------------------1.Enable Basic Function(Mouse, Clipboard,...){{{
+" >>1-1 mouse support (selection under consider)
+set mouse=a
+"set selection=exclusive
+"set selectmode=mouse,key
+
+" >>1-2 Clipboard Setting (may need to install sth.)
+set clipboard+=unnamed
+
+" >>1-3 Search Setting
+set showmatch " highlight match parentheses
+set incsearch " search as characters are entered
+set hlsearch " highlight the search result.
+set ignorecase " ignore cases when searching
+nnoremap <leader>ss :nohlsearch<CR> " turn off the highlight, bcus it will not auto close.
+"}}}
+
+" -----------------------2.(UI)Basic Interaction setting{{{-----------------
+" >>2-1 Line Locate and Display
+set nu " show line num
+set relativenumber "show line num on curent line, show relative num for others.
+set cursorline "hightlight cur line.
+
+set wrap " wrap line and if line is too long
+set linebreak " Line breaks do not break the word.
+" set textwidth=80 " how many chacter in oneline
+
+" >>2-2 Scroll setting
+set scrolloff=10 " the position of cursor from the top/bnottom when scroll vertically.
+
+" >>2-3 Status Line Setting
+set laststatus=1 " enable:2 only in multi windows:1 off:0
+set ruler " show row,col of cursor in status line.
+" reference : https://blog.csdn.net/strategycn/article/details/7620261
+set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]\ [TIME=%{strftime('%c')}]
+" :set statusline=%2*%n%m%r%h%w%*\ %F\ %1*[FORMAT=%2*%{&ff}:%{&fenc!=''?&fenc:&enc}%1*]\ [TYPE=%2*%Y%1*]\ [COL=%2*%03v%1*]\ [ROW=%2*%03l%1*/%3*%L(%p%%)%1*]\
+
+" >>2-4 Command hint.
+set showcmd " show the command we just type in. like 2d
+set showmode " show insert or command mode now (seems like not working)
+
+" >>2-5 show Bottom CMD Menu
+set wildmenu " show completion list.
+" set wildmode=longest:list,full " show all possible cmd.
+
+" >>2-6 set lcs.
+set list lcs=trail:·,tab:»·,nbsp:.,extends:#
+"}}}
+
+" -----------------------3.Indent & Tab{{{---------------------------------
+" >>3.1 Indent (c-style)
+set ai "autoindent, keep same indent with prev line.
+set si "smartindent, add {, # special situation of ai. (for c or java)
+
+" >>3.2 Tab(better using autocmd)
+set tabstop=4 "tab==<n> space
+set softtabstop=4 "when we type in tab == <n> space
+set shiftwidth=4 "the auto indet(when change line or using > or < ) will be <n> better keep it same with tab.
+set smarttab "will change <n> basis on others in this file.
+set expandtab "make all tab as space
+
+" >>3.3 specific indent file.
+" load filetype-specific indent files.
+" *.py will load ~/.vim/indent/python.vim file
+filetype on
+filetype indent on
+"}}}
+
+" -----------------------4.Theme Setting{{{----------------------------
+" show :echo $VIMRUNTIME to check vim path, then $VIMRUNTIME/colors are schemes we have.
+" colorscheme elflord
+"}}}
+
+" -----------------------5.Key mapping{{{-------------------------------
+" >>5.1 setup tab keyshort.
+nmap <tab> V>
+nmap <S-tab> V<
+vmap <tab> >gv
+vmap <S-Tab> <gv
+
+" >>5.2 shortcuts to edit zsh and vimrc
+nnoremap <leader>ev :vsp $MYVIMRC<CR>
+nnoremap <leader>ez :vsp ~/.zshrc<CR>
+nnoremap <leader>es :source $MYVIMRC<CR>
+
+" >>5.3 format file
+" del the  space in the end of line.
+nnoremap <leader>el :%s/\s\+$//<cr>:let @/=''<CR>
+" using space to replace tab.
+nnoremap <leader>er :retab!<CR>
+
+" >>5.4 switch between windows
+nmap <silent> <C>k :wincmd k<CR>
+nmap <silent> <C>j :wincmd j<CR>
+nmap <silent> <C>h :wincmd h<CR>
+nmap <silent> <C>l :wincmd l<CR>
+
+" >>5.5 tab close
+" close tab
+nmap <leader>ts :tabs<cr>
+nmap <leader>tq :tabclose<cr>
+nmap <leader>tn :tabn<cr>
+nmap <leader>tp :tabp<cr>
+
+" >>5.6 show diff <filename>
+nnoremap <leader>sd :vert diffsplit
+
+" >>5.7 basic shortcut.
+nmap <C-a> <Home>
+nmap <C-e> <End>
+nmap <C-p> <PageUp>
+nmap <C-n> <PageDown>
+
+nnoremap B ^
+nnoremap E $
+
+" toggle between number and no number
+nmap <leader>ln :call ToggleNoNumber()<CR>
+nmap <leader>lr :call ToggleNumber()<CR>
+
+" >>5.8 Run Code.
+nmap <F5> :call CompileRunGcc()<CR>
+
+" >>5.9 Add Header
+nmap <F6> :call SetTitle()<CR>
+"}}}
+
+" -----------------------6.Folder{{{-----------------------------
+set foldenable " enable fold function
+set foldlevelstart=10 " fold level at start. 0: all be closed; 99: always open.
+set foldnestmax=10 " 10 nested fold max
+set foldmethod=marker " could be indent. mark should use {{{}}}
+"try help foldmethod
+" }}}
+
+"------------------------7.AutoGroups Set File{{{---
+augroup configgroup
+    autocmd!
+    autocmd VimEnter * highlight clear SignColumn
+    autocmd BufWritePre *.php,*.py,*.js,*.txt,*.hs,*.java,*.md
+                \:call <SID>StripTrailingWhitespaces()
+    autocmd FileType java setlocal noexpandtab
+    autocmd FileType java setlocal list
+    autocmd FileType java setlocal listchars=tab:+\ ,eol:-
+    autocmd FileType java setlocal formatprg=par\ -w80\ -T4
+    autocmd FileType php setlocal expandtab
+    autocmd FileType php setlocal list
+    autocmd FileType php setlocal listchars=tab:+\ ,eol:-
+    autocmd FileType php setlocal formatprg=par\ -w80\ -T4
+    autocmd FileType ruby setlocal tabstop=2
+    autocmd FileType ruby setlocal shiftwidth=2
+    autocmd FileType ruby setlocal softtabstop=2
+    autocmd FileType ruby setlocal commentstring=#\ %s
+    autocmd FileType python setlocal commentstring=#\ %s
+    autocmd BufEnter *.cls setlocal filetype=java
+    autocmd BufEnter *.zsh-theme setlocal filetype=zsh
+    autocmd BufEnter Makefile setlocal noexpandtab
+    autocmd BufEnter *.sh setlocal tabstop=2
+    autocmd BufEnter *.sh setlocal shiftwidth=2
+    autocmd BufEnter *.sh setlocal softtabstop=2
+augroup END
+"}}}
+
+"------------------------8.function{{{------------------
+" >> Func1. toggle between number and relativenumber
+function! ToggleNumber()
+    if(&relativenumber == 1)
+        set norelativenumber
+        set number
+    else
+        set relativenumber
+    endif
+endfunc
+
+" >> Func2. toggle between number and no number
+function! ToggleNoNumber()
+    if(&relativenumber == 1 || &number == 1)
+        set norelativenumber
+        set nonumber
+    else
+        set number
+    endif
+endfunc
+
+" >> Func3. strips trailing whitespace at the end of files. this
+" is called on buffer write in the autogroup above.
+function! <SID>StripTrailingWhitespaces()
+    " save last search & cursor position
+    let _s=@/
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    let @/=_s
+    call cursor(l, c)
+endfunction
+
+" >> Func4. compile and run script.
+func! CompileRunGcc()
+    exec "w"
+    if &filetype == 'cpp'
+        exec '!g++ % -o %<'
+        exec '!time ./%<'
+        exec '!rm ./%<'
+    elseif &filetype == 'python'
+        exec '!python %'
+    elseif &filetype == 'sh'
+        :!time sh %
+    endif
+endfunc
+
+" >> Func5. Add Header for file.
+autocmd BufNewFile *.cpp,*.[ch],*.sh,*.py,*.md exec ":call SetTitle()"
+func SetTitle()
+    "如果文件类型为.sh文件
+    if &filetype == 'sh'
+        call setline(1, "# File Name: ".expand("%"))
+        call append(line("."), "# Author: AikenHong")
+        call append(line(".")+1, "# mail: h.aiken.970@gmail.com")
+        call append(line(".")+2, "# Created Time: ".strftime("%c"))
+        call append(line(".")+3, "")
+    endif
+    if &filetype == 'cpp'
+        call setline(1, "/*")
+        call append(line("."), "# File Name: ".expand("%"))
+        call append(line(".")+1, "# Author: AikenHong")
+        call append(line(".")+2, "# mail: h.aiken.970@gmail.com")
+        call append(line(".")+3, "# Created Time: ".strftime("%c"))
+        call append(line(".")+4, " */")
+        call append(line(".")+5, " ")
+        call append(line(".")+6, "#include <iostream>")
+        call append(line(".")+7, "#include <algorithm>")
+        call append(line(".")+8, "#include <vector>")
+        call append(line(".")+9, "#include <stack>")
+        call append(line(".")+10, "#include <queue>")
+        call append(line(".")+11, "#include <list>")
+        call append(line(".")+12, "#include <map>")
+        call append(line(".")+13, "#include <cmath>")
+        call append(line(".")+14, "#include <set>")
+        call append(line(".")+15, "")
+        call append(line(".")+16, "using namespace std;")
+        call append(line(".")+17, "")
+        call append(line(".")+18, "int main()")
+        call append(line(".")+19, "{")
+        call append(line(".")+20, "    ")
+        call append(line(".")+21, "    ")
+        call append(line(".")+22, "    return 0;")
+        call append(line(".")+23, "}")
+    endif
+    if &filetype == 'python'
+        call setline(1, "\"\"\"")
+        call append(line("."), "# File Name: ".expand("%"))
+        call append(line(".")+1, "# Author: AikenHong")
+        call append(line(".")+2, "# mail: h.aiken.970@gmail.com")
+        call append(line(".")+3, "# Created Time: ".strftime("%c"))
+        call append(line(".")+4, "\"\"\"")
+        call append(line(".")+5, "")
+    endif
+    if &filetype == 'markdown'
+        call setline(1,"---")
+        call append(line("."), "title: ")
+        call append(line(".")+1, "subtitle: ")
+        call append(line(".")+2, "toc: true")
+        call append(line(".")+3, "lang: cn ")
+        call append(line(".")+4, "catalog: true")
+        call append(line(".")+5, "date: ".strftime("%Y-%m-%d %H:%M:%s"))
+        call append(line(".")+6, "cover: /img/header_img/lml_bg.jpg")
+        call append(line(".")+7, "thumbnail: /img/header_img/lml_bg.jpg")
+        call append(line(".")+8, "mathjax: false")
+        call append(line(".")+9, "tag: ")
+        call append(line(".")+10, "categories: ")
+        call append(line(".")+11, "---")
+    endif
+    "新建文件后，自动定位到文件末尾
+    autocmd BufNewFile * normal G
+endfunction
+
+"}}}
+
+" This Config will finish here, but like fold and indent is not done. so we will catch up in this file.
+
