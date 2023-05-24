@@ -42,3 +42,7 @@ Here is some we need to keep.
 - For_Ranger:
 - For_Tmux: keymap setting
 
+## Potplayer
+
+
+

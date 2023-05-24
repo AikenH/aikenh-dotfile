@@ -10,7 +10,9 @@
 " https://dougblack.io/words/a-good-vimrc.html
 " https://segmentfault.com/a/1190000021029480
 " https://zhuanlan.zhihu.com/p/98360630
-
+" https://gist.github.com/ldaidone/47c12526ece6ebb6e3e4
+" https://github.com/KarimElghamry/vim-auto-comment/blob/master/plugin/vim-auto-comment.vim
+" thx to all of those ,especial the last one, ez auto comment.
 " -----------------------0.vim Basic Setting{{{------------------------
 " >>0-0 basic info.
 let mapleader="\<space>"
@@ -21,6 +23,12 @@ set backspace=indent,eol,start " help to del special character.(or =2)
 
 syntax enable
 syntax on " enable syntax processing
+
+" close annoying sound on errors
+set noerrorbells
+set novisualbell
+set t_vb=
+set tm=500
 
 " >>0-1 state detection.
 set autoread " when file change outside, we will know
@@ -40,7 +48,17 @@ set mouse=a
 "set selectmode=mouse,key
 
 " >>1-2 Clipboard Setting (may need to install sth.)
+"       thx to https://github.com/microsoft/WSL/issues/4440
+"       and https://www.reddit.com/r/bashonubuntuonwindows/comments/be2q3l/comment/el2vx7u/?utm_source=share&utm_medium=web2x
 set clipboard+=unnamed
+"       WSL yank support
+let s:clip = '/mnt/c/WINDOWS/system32/clip.exe'  " change this path according to your mount point
+if executable(s:clip)
+    augroup WSLYank
+        autocmd!
+        autocmd TextYankPost * if v:event.operator ==# 'y' | call system(s:clip, @0) | endif
+    augroup END
+endif
 
 " >>1-3 Search Setting
 set showmatch " highlight match parentheses
@@ -48,13 +66,21 @@ set incsearch " search as characters are entered
 set hlsearch " highlight the search result.
 set ignorecase " ignore cases when searching
 nnoremap <leader>ss :nohlsearch<CR> " turn off the highlight, bcus it will not auto close.
+
+set magic " using regular expressions then turn magic on.
+
+" >>1-4 toggle spell checking.
+map <leader>ls :setlocal spell!<CR>
+
+" >>1-5 toggle paste mode
+map <leader>lp :setlocal paste!<CR>
 "}}}
 
 " -----------------------2.(UI)Basic Interaction setting{{{-----------------
 " >>2-1 Line Locate and Display
 set nu " show line num
 set relativenumber "show line num on curent line, show relative num for others.
-set cursorline "hightlight cur line.
+set cursorline "highlight cur line.
 
 set wrap " wrap line and if line is too long
 set linebreak " Line breaks do not break the word.
@@ -64,11 +90,13 @@ set linebreak " Line breaks do not break the word.
 set scrolloff=10 " the position of cursor from the top/bnottom when scroll vertically.
 
 " >>2-3 Status Line Setting
+set cmdheight=2 " set the cmd line height
 set laststatus=1 " enable:2 only in multi windows:1 off:0
 set ruler " show row,col of cursor in status line.
 " reference : https://blog.csdn.net/strategycn/article/details/7620261
 set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]\ [TIME=%{strftime('%c')}]
-" :set statusline=%2*%n%m%r%h%w%*\ %F\ %1*[FORMAT=%2*%{&ff}:%{&fenc!=''?&fenc:&enc}%1*]\ [TYPE=%2*%Y%1*]\ [COL=%2*%03v%1*]\ [ROW=%2*%03l%1*/%3*%L(%p%%)%1*]\
+"set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
+"set statusline=%2*%n%m%r%h%w%*\ %F\ %1*[FORMAT=%2*%{&ff}:%{&fenc!=''?&fenc:&enc}%1*]\ [TYPE=%2*%Y%1*]\ [COL=%2*%03v%1*]\ [ROW=%2*%03l%1*/%3*%L(%p%%)%1*]\
 
 " >>2-4 Command hint.
 set showcmd " show the command we just type in. like 2d
@@ -80,6 +108,14 @@ set wildmenu " show completion list.
 
 " >>2-6 set lcs.
 set list lcs=trail:·,tab:»·,nbsp:.,extends:#
+
+" >>2-7 return to last edit pos when open same files.
+autocmd BufReadPost *
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "normal! g`\"" |
+    \ endif
+" Remember info about open buffers on close
+set viminfo^=%
 "}}}
 
 " -----------------------3.Indent & Tab{{{---------------------------------
@@ -98,12 +134,22 @@ set expandtab "make all tab as space
 " load filetype-specific indent files.
 " *.py will load ~/.vim/indent/python.vim file
 filetype on
+filetype plugin on
 filetype indent on
 "}}}
 
 " -----------------------4.Theme Setting{{{----------------------------
 " show :echo $VIMRUNTIME to check vim path, then $VIMRUNTIME/colors are schemes we have.
 " colorscheme elflord
+colorscheme desert
+set background=dark
+" Set extra options when running in GUI mode
+if has("gui_running")
+    set guioptions-=T
+    set guioptions+=e
+    set t_Co=256
+    set guitablabel=%M\ %t
+endif
 "}}}
 
 " -----------------------5.Key mapping{{{-------------------------------
@@ -125,10 +171,10 @@ nnoremap <leader>el :%s/\s\+$//<cr>:let @/=''<CR>
 nnoremap <leader>er :retab!<CR>
 
 " >>5.4 switch between windows
-nmap <silent> <C>k :wincmd k<CR>
-nmap <silent> <C>j :wincmd j<CR>
-nmap <silent> <C>h :wincmd h<CR>
-nmap <silent> <C>l :wincmd l<CR>
+nmap <silent> <leader>wk :wincmd k<CR>
+nmap <silent> <leader>wj :wincmd j<CR>
+nmap <silent> <leader>wh :wincmd h<CR>
+nmap <silent> <leader>wl :wincmd l<cr>
 
 " >>5.5 tab close
 " close tab
@@ -149,15 +195,19 @@ nmap <C-n> <PageDown>
 nnoremap B ^
 nnoremap E $
 
-" toggle between number and no number
+" >>5.8 toggle between number and no number
 nmap <leader>ln :call ToggleNoNumber()<CR>
 nmap <leader>lr :call ToggleNumber()<CR>
 
-" >>5.8 Run Code.
+" >>5.9 toggle wrap setting,
+nmap <leader>lw :call ToggleWrap()<CR>
+
+" >>5.10 Run Code.
 nmap <F5> :call CompileRunGcc()<CR>
 
-" >>5.9 Add Header
+" >>5.11 Add Header
 nmap <F6> :call SetTitle()<CR>
+
 "}}}
 
 " -----------------------6.Folder{{{-----------------------------
@@ -168,7 +218,7 @@ set foldmethod=marker " could be indent. mark should use {{{}}}
 "try help foldmethod
 " }}}
 
-"------------------------7.AutoGroups Set File{{{---
+"-----------------------7.AutoGroups Set File{{{---
 augroup configgroup
     autocmd!
     autocmd VimEnter * highlight clear SignColumn
@@ -196,7 +246,7 @@ augroup configgroup
 augroup END
 "}}}
 
-"------------------------8.function{{{------------------
+"-----------------------8.function{{{------------------
 " >> Func1. toggle between number and relativenumber
 function! ToggleNumber()
     if(&relativenumber == 1)
@@ -243,7 +293,16 @@ func! CompileRunGcc()
     endif
 endfunc
 
-" >> Func5. Add Header for file.
+" >> Func5. toggle warp setting.
+function! ToggleWrap()
+  if(&wrap == 1)
+      set nowrap
+  else
+      set wrap
+  endif
+endfunc
+
+" >> Func6. Add Header for file.
 autocmd BufNewFile *.cpp,*.[ch],*.sh,*.py,*.md exec ":call SetTitle()"
 func SetTitle()
     "如果文件类型为.sh文件
@@ -309,6 +368,122 @@ func SetTitle()
     autocmd BufNewFile * normal G
 endfunction
 
+
+"}}}
+
+" -----------------------9.auto comment{{{------------------------------
+" dictionary for mapping inline comment tokens to the corresponding files
+let g:inline_comment_dict = get(g:, 'inline_comment_dict',
+            \{
+            \'//': ["js", "ts", "cpp", "c", "dart", "go"],
+            \'#': ['py', 'sh'],
+            \'"': ['vim', 'vimrc'],
+            \})
+
+" variable for setting the default inlink comment token if the current file is
+" not found in the dictionary
+let g:default_inline_comment = get(g:, 'default_inline_comment', '"')
+
+" dictionary for mapping block comment tokens to the corresponding files
+let g:block_comment_dict = get(g:, 'block_comment_dict', {
+        \'/*': ["js", "ts", "cpp", "c", "dart"],
+        \'"""': ['py'],
+        \})
+
+
+" variable for setting the default inlink comment token if the current file is
+" not found in the dictionary
+let g:default_block_comment = get(g:, 'default_block_comment', '/*')
+
+" ---------------------------------- "
+" function to reverse a given string
+function! s:ReverseString(input_string)
+    let output = ''
+    for i in split(a:input_string, '\zs')
+    let output = i . output
+    endfor
+    return output
+endfunction
+
+" ---------------------------------- "
+"   function for inline auto commenting
+function! s:AutoInlineComment()
+"   get extension
+    let extension = expand('%:e')
+    let comment = g:default_inline_comment
+
+"   check file extension against each entry in inline comment dictionary
+    for item in items(g:inline_comment_dict)
+    if index(item[1], extension) >= 0
+        let comment = item[0]
+        break
+    endif
+    endfor
+
+"   trim leading white spaces
+    let current_line = substitute(getline("."), '^[ ]*', '' , 'g')
+
+"   check if current line is commented or not
+    if(current_line[:len(comment) - 1] != comment)
+    execute ':s/^/' . escape(comment, '^$.*?/\[]') . ' /'
+    else
+    execute ':s/^\( *\)' . escape(comment, '^$.*?/\[]') . '\( \?\)//'
+    endif
+
+    :noh
+endfunction
+
+
+" ---------------------------------- "
+"   function for block auto commenting
+function! s:AutoBlockComment() range
+"   get extension
+    let extension = expand('%:e')
+    let comment = g:default_block_comment
+
+"   check file extension against each entry in block comment dictionary
+    for item in items(g:block_comment_dict)
+    if index(item[1], extension) >= 0
+        let comment = item[0]
+        break
+    endif
+    endfor
+"   reverse the comment token
+    let reverse_comment = s:ReverseString(comment)
+
+"   get first and last tokens
+    let firstline_token = substitute(getline(a:firstline), '^[ ]*', '', 'g')[:len(comment) - 1]
+    let lastline_token = substitute(getline(a:lastline), '[ ]*$', '', 'g')[-len(comment):]
+
+"   check if the block is commented and parse accordingly
+    if (firstline_token == comment && lastline_token == reverse_comment)
+    execute ':'. a:firstline . ',' . a:firstline . 's/^\( *\)' . escape(comment, '^$.*?/\[]') . '\( \?\)//'
+    execute ':'. a:lastline . ',' . a:lastline . 's/\s\?' . escape(reverse_comment, '^$.*?/\[]') . '$//'
+    else
+    execute ':'. a:firstline . ',' . a:firstline . 's/^/' . escape(comment, '^$.*?/\[]') . ' /'
+    execute ':'. a:lastline . ',' . a:lastline . 's/$/ ' . escape(reverse_comment, '^$.*?/\[]') . '/'
+    endif
+endfunction
+
+
+" ---------------------------------- "
+"  define commands
+command! -range AutoInlineComment <line1>,<line2>call <sid>AutoInlineComment()
+command! -range AutoBlockComment <line1>,<line2>call <sid>AutoBlockComment()
+
+" ---------------------------------- "
+"  define default mappings
+if !exists('g:autocomment_map_keys')
+    let g:autocomment_map_keys = 1
+endif
+
+if (g:autocomment_map_keys)
+    vnoremap <leader>/ :AutoInlineComment<CR>
+    nnoremap <leader>/ :AutoInlineComment<CR>
+
+    vnoremap <leader>, :AutoBlockComment<CR>
+    nnoremap <leader>, :AutoBlockComment<CR>
+endif
 "}}}
 
 " This Config will finish here, but like fold and indent is not done. so we will catch up in this file.
