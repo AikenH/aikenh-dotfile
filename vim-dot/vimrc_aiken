@@ -121,7 +121,7 @@ set viminfo^=%
 " -----------------------3.Indent & Tab{{{---------------------------------
 " >>3.1 Indent (c-style)
 set ai "autoindent, keep same indent with prev line.
-set si "smartindent, add {, # special situation of ai. (for c or java)
+" set si "smartindent, add {, # special situation of ai. (for c or java)
 
 " >>3.2 Tab(better using autocmd)
 set tabstop=4 "tab==<n> space
@@ -222,8 +222,8 @@ set foldmethod=marker " could be indent. mark should use {{{}}}
 augroup configgroup
     autocmd!
     autocmd VimEnter * highlight clear SignColumn
-    autocmd BufWritePre *.php,*.py,*.js,*.txt,*.hs,*.java,*.md
-                \:call <SID>StripTrailingWhitespaces()
+"     autocmd BufWritePre *.php,*.py,*.js,*.txt,*.hs,*.java,*.md
+"                 \:call <SID>StripTrailingWhitespaces()
     autocmd FileType java setlocal noexpandtab
     autocmd FileType java setlocal list
     autocmd FileType java setlocal listchars=tab:+\ ,eol:-
@@ -232,6 +232,8 @@ augroup configgroup
     autocmd FileType php setlocal list
     autocmd FileType php setlocal listchars=tab:+\ ,eol:-
     autocmd FileType php setlocal formatprg=par\ -w80\ -T4
+    autocmd FileType cpp setlocal si
+    autocmd FileType cpp setlocal cindent
     autocmd FileType ruby setlocal tabstop=2
     autocmd FileType ruby setlocal shiftwidth=2
     autocmd FileType ruby setlocal softtabstop=2
