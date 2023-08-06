@@ -1,14 +1,12 @@
 #!/bin/bash
 #FIXME: make get the ip automaticly and echo that process
-#FIXME: modify the zshrc for plugins including extra.
-#FIXME: backup the origin version and rewrite one, when we hit the key word
-#       we will modify the content. like plugins.
 
 # Proxy Setting.
 proxy=172.30.240.1:8890
 echo "proxy: $proxy"
 
-# DESC: input is process-description.
+# ============================ FUNCTION SETTING===================
+# 1. DESC: input is process-description.
 function exec_cmd_status(){
   # this input para's process name.
   if [ $? -ne 0 ]; then
@@ -19,7 +17,7 @@ function exec_cmd_status(){
   fi
 }
 
-# DESC: check file exist
+# 2. DESC: check file exist
 function check_file(){
   mode=$(($2))
   # whether file is exist or not.
@@ -36,7 +34,7 @@ function check_file(){
   fi
 }
 
-# DESC: check dir exist
+# 3. DESC: check dir exist
 function check_dir(){
   # whether dir is exist or not.
   if [ -d "$1" ]; then
@@ -47,6 +45,18 @@ function check_dir(){
   fi
 }
 
+# 4. DESC: check file, if $? -eq 0 not exist, -eq 1 file exit.
+function skip_exist(){
+  if ! ls $1 > /dev/null 2>&1; then
+    echo "$1 file not exist. contiune"
+    return 0
+  else
+    echo "file exit pass this."
+    return 1
+  fi
+}
+
+# 5. DESC: setting plugin for zsh
 function plugins_setting(){
   # find out plugins line and add plugins on it.
   # this method only suit for init situation. so we check it.
@@ -74,7 +84,7 @@ function plugins_setting(){
   fi
 }
 
-# ====================main process=========================
+# ============================MAIN PROCESS==============================
 # INSTALL zsh and oh-my-zsh and plugins 
 sudo apt-get install zsh
 exec_cmd_status "install zsh"
@@ -93,7 +103,6 @@ exec_cmd_status "download zsh-autosuggestions to omz"
 # generate zsh dotfile here. then install plugins.
 bash 
 conda init zsh # init zsh
-cat ~/.bashrc | grep -i nvm >> ~/.zshrc # init zsh
 exec_cmd_status "conda init zsh "
 # ==========================================================================================
 
@@ -110,11 +119,21 @@ exec_cmd_status "setting plugins"
 
 # install btm and htop for monitor
 sudo apt-get install htop
- 
-cd /tmp/
-curl https://api.github.com/repos/ClementTsang/bottom/releases/latest --proxy $proxy| grep browser_download_url | grep amd64.deb | cut -d '"' -f 4 | wget -qi -
-sudo apt install ./bottom*.deb
-cd - 
+
+command -v btm
+if [[ $? -eq 0 ]];then
+  cd /tmp/
+  skip_exist /tmp/bottom*.deb
+  if [[ $? -eq 0 ]];then
+    curl https://api.github.com/repos/ClementTsang/bottom/releases/latest --proxy $proxy| grep browser_download_url | grep amd64.deb | cut -d '"' -f 4 | wget -qi -
+  else
+    echo "bottom exit"
+  fi
+  sudo apt install ./bottom*.deb
+  cd -
+else
+  echo "bottom has exist, not need to install"
+fi
 
 # install ranger for file manager
 sudo apt-get install ranger
@@ -125,6 +144,7 @@ sudo apt-get install neofetch
 # export the extra function into zsh.
 cat ./zsh_extra >> ~/.zshrc
 
+cat ~/.bashrc | grep -i nvm >> ~/.zshrc # init zsh
 # becus we install nvm in bash, we move config here.
 echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.zshrc
 echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.zshrc # This loads nvm

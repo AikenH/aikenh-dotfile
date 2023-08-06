@@ -47,6 +47,15 @@ echo "---------------------install nvm and nodejs, npm"
 curl --proxy $proxy -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 source ~/.bashrc
 echo "you need restart to reboot nvm, then we use nvm to install node"
+
+# cpy nvm 2 .zshrc
+cat ~/.bashrc | grep -i nvm >> ~/.zshrc # init zsh
+# becus we install nvm in bash, we move config here.
+echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.zshrc
+echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.zshrc # This loads nvm
+echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \\"$NVM_DIR/bash_completion\" >> ~/.zshrc  # This loads nvm bash_completion" >> ~/.zshrc
+
+# manager specific npm version
 nvm list-remote
 nvm -v
 nvm install v18.15.0
