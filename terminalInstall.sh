@@ -144,11 +144,5 @@ sudo apt-get install neofetch
 # export the extra function into zsh.
 cat ./zsh_extra >> ~/.zshrc
 
-cat ~/.bashrc | grep -i nvm >> ~/.zshrc # init zsh
-# becus we install nvm in bash, we move config here.
-echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.zshrc
-echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.zshrc # This loads nvm
-echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \\"$NVM_DIR/bash_completion\" >> ~/.zshrc  # This loads nvm bash_completion" >> ~/.zshrc
-
 # support bash command
 echo "setopt no_nomatch" >> ~/.zshrc
