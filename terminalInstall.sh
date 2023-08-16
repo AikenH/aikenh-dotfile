@@ -142,7 +142,7 @@ sudo apt-get install ranger
 sudo apt-get install neofetch
 
 # export the extra function into zsh.
-cat ./zsh_extra >> ~/.zshrc
+cat ./setproxy.sh >> ~/.zshrc
 
 # support bash command
 echo "setopt no_nomatch" >> ~/.zshrc
