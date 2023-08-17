@@ -25,7 +25,18 @@ local plugins = {
   -- override plugin configs
   {
     "williamboman/mason.nvim",
-    opts = overrides.mason
+    -- opts = overrides.mason
+    opts = {
+      ensure_installed = {
+        "cmake-language-server",
+        "html-lsp",
+        "powershell-editor-services",
+        "pyright",
+        "sqlls",
+        "bash-language-server",
+        "marksman",
+      }
+    }
   },
 
   {
