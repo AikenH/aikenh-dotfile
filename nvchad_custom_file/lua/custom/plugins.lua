@@ -28,13 +28,18 @@ local plugins = {
     -- opts = overrides.mason
     opts = {
       ensure_installed = {
+        -- lsp server
         "cmake-language-server",
         "html-lsp",
         "powershell-editor-services",
         "pyright",
         "sqlls",
         "bash-language-server",
-        "marksman",
+
+        -- format 
+        "marksman",  --markdown
+        "shfmt",     --bash
+        "black",     --python
       }
     }
   },

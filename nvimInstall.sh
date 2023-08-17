@@ -9,8 +9,8 @@ proxy="172.30.240.1:8890"
 echo "------------------install miniconda for neovim"
 wget -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod 777 Miniconda3-latest-Linux-x86_64.sh
-bash  Miniconda3-latest-Linux-x86_64.sh
-rm  Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+rm Miniconda3-latest-Linux-x86_64.sh
 
 # 1.install neovim (using unstable for diff sys)
 echo "------------------install neovim"
@@ -19,7 +19,7 @@ sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt-get update
 sudo apt-get install neovim
 
-nvim_version=`nvim -v | grep dev`
+nvim_version=$(nvim -v | grep dev)
 echo "neovim's version is $nvim_version"
 
 # 2. install dependency of neovim
@@ -49,25 +49,25 @@ source ~/.bashrc
 echo "you need restart to reboot nvm, then we use nvm to install node"
 
 # cpy nvm 2 .zshrc
-cat ~/.bashrc | grep -i nvm >> ~/.zshrc # init zsh
+cat ~/.bashrc | grep -i nvm >>~/.zshrc # init zsh
 # becus we install nvm in bash, we move config here.
-echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.zshrc
-echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.zshrc # This loads nvm
-echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \\"$NVM_DIR/bash_completion\" >> ~/.zshrc  # This loads nvm bash_completion" >> ~/.zshrc
+echo "export NVM_DIR=\"$HOME/.nvm\"" >>~/.zshrc
+echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >>~/.zshrc                   # This loads nvm
+echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \\"$NVM_DIR/bash_completion\" >>~/.zshrc # This loads nvm bash_completion" >> ~/.zshrc
 
 # manager specific npm version
 nvm list-remote
 nvm -v
 nvm install v18.15.0
 node -v
-npm -version 
+npm -version
 npm install -g neovim
 
 # 6. install ruby and gem
 sudo apt-get install ruby-full
 ruby -v
 gem environment
-gem install neovim 
+gem install neovim
 
 # 7. start nvim
 nvim

@@ -50,7 +50,40 @@ local servers = { "html", "cssls", "tsserver", "clangd", "bashls", "cmake", "lua
 after all those, we can open *.[filetyle] then type `:lsp_info` to checkout the server work or not.
 Also the server will show up on right corner automaticlly.
 
-## How to config linter & format.
+## How to config format.
+
+Just like config the lsp-server, config format function still have two step: 
+
+ONE: **INSTALL FORMATTER**: using mason install formatter like black(python), pretter, clang_format(cpp), stylelua(lua) ...
+
+STILL, add those on ensure_installed of mason, then type :MasonInstallAll and done.
+
+TWO: **CONFIG NULLLS**: null-ls help those formatter work like 'server'(like lsp server), after config it, when open *.[filetype] , neovim will use it to ask server from from those formatter we had installed. 
+
+> if you donnot know what formatter you need, you can open a *.[filetype] then type `:NullLsInfo` , then it'll show what this filetype need and whether this file has been supported or not.
+
+
+NOW come to what we should edit: `custom/config/null-ls.lua`, add formatter we have installed like the bash one below:
+
+```lua
+local sources = {
+
+  -- webdev stuff
+  b.formatting.deno_fmt, -- choosed deno for ts/js files cuz its very fast!
+  b.formatting.prettier.with { filetypes = { "html", "markdown", "css" } }, -- so prettier works only on these filetypes
+
+  -- Lua
+  b.formatting.stylua,
+
+  -- cpp
+  b.formatting.clang_format,
+
+  -- bash
+  b.formatting.shfmt,
+}
+```
+
+this example show formatter for cpp,lua,bash, and using prettier to support html,markdown,css.
 
 
 
