@@ -11,3 +11,8 @@ This dir contain(not finish yet).
 - chadrc add some about the ui.
 
 If dont need to modify the core config file, I'll continue update this or I will fork the repo.
+
+TODO: 
+
+- add proxy for treesitter update.
+- add langs setting for self use
