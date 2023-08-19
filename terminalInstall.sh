@@ -24,7 +24,7 @@ function check_file(){
   if [ -f "$1" ]; then
    echo "$1 exist. work on"
   else
-    if (( $mode <= 0 ))
+    if (( $mode <= 0 )); then
       echo "$1 not exist, we will create one."
       touch $1
     else
@@ -142,7 +142,7 @@ sudo apt-get install ranger
 sudo apt-get install neofetch
 
 # export the extra function into zsh.
-cat ./setproxy.sh >> ~/.zshrc
+cat ./zsh_extra >> ~/.zshrc
 
 # support bash command
 echo "setopt no_nomatch" >> ~/.zshrc
