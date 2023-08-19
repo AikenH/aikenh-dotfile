@@ -1,0 +1,23 @@
+{
+  "docs title": {
+    "prefix": "meta",
+    "body": [
+      "---",
+      "title: ",
+      "catalog: true",
+      "toc: true",
+      "date: ",
+      "subtitle: ",
+      "lang: cn",
+      "cover: /img/header_img/lml_bg2.jpg",
+      "thumbnail: /img/header_img/lml_bg2.jpg",
+      "tag:",
+      "- ",
+      "categories:",
+      "- ",
+      "mathjax: false",
+      "---"
+    ],
+    "description": "docs title"
+  }
+}

@@ -20,3 +20,8 @@ vim.cmd([[autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") |
 -- incase can not del the special chara
 vim.opt.backspace = "indent,eol,start"
 
+-- snippets
+-- 1. SHOULD BE ABSOLUTE PATH, CAN ALSO USE stdpath to CONCAT STRING
+-- 2. snippets should have package.json to defined all the langs's snippets' path
+-- vim.g.vscode_snippets_path = vim.fn.stdpath "config" .. "/lua/custom/snippets"
+vim.g.vscode_snippets_path = "~/.config/nvim/lua/custom/snippets/"

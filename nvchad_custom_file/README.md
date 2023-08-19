@@ -86,4 +86,113 @@ local sources = {
 this example show formatter for cpp,lua,bash, and using prettier to support html,markdown,css.
 
 
+## How to config linter
 
+Config add install linter is totally same with format.
+
+1. **USING MASON 2 INSTALL THOSE LINTER WE NEED**. we dont talk it again.
+2. **CONFIG IT in NULLLS**, there are a little bit different, the keyword we add linter in null-ls is not linter or formatting, it's **diagnostics**, so if we using flake8 for python and, shellcheck for bash, it'll be like:
+
+```lua
+local sources = {
+
+  ------------------------------FORMATTER-----------------------
+  b.formatting.black, --python
+
+  -------------------------------LINTER------------------------
+  b.diagnostics.flake8, --python
+  b.diagnostics.shellcheck, --shell
+}
+```
+
+done!
+
+## How to add snippets
+
+nvchad have config friendly-snippets already ising **luasnip** which support multi-style of snippets including vscode.
+
+ref: we can learn about how to defined a snippets for self.
+
+- [luasnip](https://github.com/L3MON4D3/LuaSnip/blob/master/DOC.md#loaders)
+- [friendly-snippets](https://github.com/rafamadriz/friendly-snippets/tree/main): 
+- [nvchad-snippets](https://nvchad.com/docs/config/snippets)
+
+when we want to add personal snippets, there are some points we need to notics.
+
+1. CONFIG SNIPPETS PATH IN **custom/init.lua**(intro vscode path only here), but remerber, here should be absolute path, you can write it like below:
+
+```lua
+-- snippets
+-- 1. SHOULD BE ABSOLUTE PATH, CAN ALSO USE stdpath to CONCAT STRING
+-- 2. snippets should have package.json to defined all the langs's snippets' path
+vim.g.vscode_snippets_path = vim.fn.stdpath "config" .. "/lua/custom/snippets"
+vim.g.vscode_snippets_path = "~/.config/nvim/lua/custom/snippets/"
+
+```
+
+one of those two is ok. other snippets path is same.
+
+2. IN the snippets path, we should have package.json to index all the  snippet path of langs.
+3. add legal snippets for langs you need.
+
+EXAMPLE:
+
+- `<...>/.config/nvim/lua/custom/snippets` I have vscode(dir) && package.json
+- `<...>/custom/snippets/vscode` I have markdown.json && all.json
+
+
+packages.json :
+
+```json
+{
+	"name": "language",
+	"contributes": {
+		"snippets": [
+			{
+				"language": [
+					"all"
+				],
+				"path": "./vscode/all.json"
+			},
+			{
+				"language": [
+					"markdown"
+				],
+				"path": "./vscode/markdown.json"
+			}
+		]
+	}
+}
+```
+
+markdown.json :
+
+```json
+{
+  "docs title": {
+    "prefix": "meta",
+    "body": [
+      "---",
+      "title: $1",
+      "catalog: true",
+      "toc: true",
+      "date: $2",
+      "subtitle: $3",
+      "lang: cn",
+      "cover: /img/header_img/lml_bg2.jpg",
+      "thumbnail: /img/header_img/lml_bg2.jpg",
+      "tag:",
+      "- $4",
+      "categories:",
+      "- $5",
+      "mathjax: false",
+      "---"
+    ],
+    "description": "docs title"
+  }
+}
+```
+
+about how to write snippets can checkout it's offial website, here provide some tool for write vscode snippets faster: [snippets-generator](https://snippet-generator.app/)
+
+## FI
