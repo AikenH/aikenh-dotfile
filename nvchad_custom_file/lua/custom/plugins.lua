@@ -1,4 +1,4 @@
-local overrides = require("custom.configs.overrides")
+local overrides = require "custom.configs.overrides"
 
 ---@type NvPluginSpec[]
 local plugins = {
@@ -36,12 +36,16 @@ local plugins = {
         "sqlls",
         "bash-language-server",
 
-        -- format 
-        "marksman",  --markdown
-        "shfmt",     --bash
-        "black",     --python
-      }
-    }
+        -- format
+        "marksman", --markdown
+        "shfmt", --bash
+        "black", --python
+
+        -- linter
+        "flake8", --python (flask8 will contain this, only check error)
+        "shellcheck", --shell
+      },
+    },
   },
 
   {
@@ -80,8 +84,8 @@ local plugins = {
         "sql",
 
         --
-      }
-    }
+      },
+    },
   },
 
   {
