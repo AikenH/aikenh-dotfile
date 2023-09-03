@@ -2,7 +2,7 @@
 #FIXME: make get the ip automaticly and echo that process
 
 # Proxy Setting.
-proxy=172.30.240.1:8890
+proxy=http://192.168.31.201:7890
 echo "proxy: $proxy"
 
 # ============================ FUNCTION SETTING===================
@@ -10,10 +10,10 @@ echo "proxy: $proxy"
 function exec_cmd_status(){
   # this input para's process name.
   if [ $? -ne 0 ]; then
-    echo $1" fail! check this. process."
+    echo "$1 fail! check this. process."
     exit 1
   else
-    echo $1" success. contiune"
+    echo "$1 success. contiune"
   fi
 }
 
@@ -26,7 +26,7 @@ function check_file(){
   else
     if (( $mode <= 0 )); then
       echo "$1 not exist, we will create one."
-      touch $1
+      touch "$1"
     else
       echo "$1 is necessary, pipeline failed, try again."
       exit 1 
@@ -41,7 +41,7 @@ function check_dir(){
     echo "$1 is a directory, work on"
   else
     echo "$1 not exist, create directory"
-    mkdir -p $1
+    mkdir -p "$1"
   fi
 }
 
@@ -60,11 +60,11 @@ function skip_exist(){
 function plugins_setting(){
   # find out plugins line and add plugins on it.
   # this method only suit for init situation. so we check it.
-  zsh_file='~/.zshrc'
+  zsh_file="$HOME/.zshrc"
   line_num=`cat $zsh_file  | awk "/plugins=\(git\)/{print NR}"`
   # write a loop to write down the plugins<Left>
   plugins=('git' 'zsh-syntax-highlighting' 'zsh-autosuggestions' 'colored-man-pages' 'safe-paste' 'themes' 'tmux' 'sudo' 'z')
-  grep -A 10 "plugins" $zsh_file | grep -q "sudo\|safe-paste\|themes\|tmux"
+  grep -A 10 "plugins" $zsh_file | grep -q "sudo\|safe-paste\|tmux"
   isinit=$?
 
   if [[ $isinit -eq '0' ]]; then
@@ -84,10 +84,16 @@ function plugins_setting(){
   fi
 }
 
+plugins_setting 
+exec_cmd_status "setting plugins"
+
 # ============================MAIN PROCESS==============================
 # INSTALL zsh and oh-my-zsh and plugins 
 sudo apt-get install zsh
 exec_cmd_status "install zsh"
+
+sudo apt-get install curl
+exec_cmd_status "install curl"
 
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh --proxy $proxy)"
 exec_cmd_status "install & download oh-my-zsh"
@@ -101,7 +107,7 @@ exec_cmd_status "download zsh-autosuggestions to omz"
 
 # FIXME: =======================this part should move to conda install =====================
 # generate zsh dotfile here. then install plugins.
-bash 
+bash
 conda init zsh # init zsh
 exec_cmd_status "conda init zsh "
 # ==========================================================================================
@@ -114,20 +120,17 @@ echo "alias cl='clear'" >> ~/.zshrc
 echo "alias nv='nvim'" >> ~/.zshrc
 echo "alias lsd='ls -d */'" >> ~/.zshrc
 
-plugins_setting()
-exec_cmd_status "setting plugins"
-
 # install btm and htop for monitor
 sudo apt-get install htop
 
-command -v btm
-if [[ $? -eq 0 ]];then
+which btm
+if [[ $? -ne 0 ]];then
   cd /tmp/
-  skip_exist /tmp/bottom*.deb
-  if [[ $? -eq 0 ]];then
+  ls /tmp/bottom*.deb
+  if [[ $? -ne 0 ]];then
     curl https://api.github.com/repos/ClementTsang/bottom/releases/latest --proxy $proxy| grep browser_download_url | grep amd64.deb | cut -d '"' -f 4 | wget -qi -
   else
-    echo "bottom exit"
+    echo "bottom install package exit"
   fi
   sudo apt install ./bottom*.deb
   cd -
