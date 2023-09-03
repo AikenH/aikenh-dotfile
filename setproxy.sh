@@ -1,13 +1,13 @@
 #!/bin/bash
-
-# 1. ============== GET HOST IP FOR WSL2 ===================
+# Proxy Function Import Flag
+# P1. GET HOST IP FOR WSL2
 function GetHostIp() {
 	ip=$(grep nameserver /etc/resolv.conf | awk '{print $2}')
 	echo "the host ip is: $ip, then we ping it to test fireware is open or not"
 	ping "$ip"
 }
 
-# 2. ============== SET PROXY 4 WSL2 USING HOST=============
+# P2. SET PROXY 4 WSL2 USING HOST
 function SetWSL2Proxy() {
 	ip=$(grep nameserver /etc/resolv.conf | awk '{print $2}')
 	port=${1:-"7890"}
@@ -16,7 +16,7 @@ function SetWSL2Proxy() {
 	echo "set proxy by $ip:$port"
 }
 
-# 3. ============== SET/CANCER PROXY (LINUX MAC WSL2)===========
+# P3-4. SET/CANCER PROXY (LINUX MAC WSL2)
 function unsetProxy() {
 
 	unset http_proxy
@@ -49,11 +49,12 @@ function setProxy() {
   git config --global http.proxy "http://$ip:$port"
 }
 
+# P5. SET ALIAS OF PROXYFUNCTION
 alias gethostip=GetHostIp
 alias proxyon=SetWSL2Proxy
 alias proxyoff=unsetProxy
 alias proxyall=setProxy
 
-unsetProxy
+# P6. SET PROXY
 setProxy "192.168.31.201" "7890"
-npm config ls -l | grep proxy
+# npm config ls -l | grep proxy
