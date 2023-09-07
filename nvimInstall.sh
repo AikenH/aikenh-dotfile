@@ -70,6 +70,8 @@ exec_cmd_status "install fd-find"
 
 # 5. install nvm to install nodejs.(need restart)
 echo "***************install nvm and nodejs, npm"
+source ~/.nvm/nvm.sh
+source ~/.profile
 nvm -v 
 if [[ $? -ne 0 ]]; then
   curl --proxy $proxy -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -81,25 +83,44 @@ if [[ $? -ne 0 ]]; then
   # becus we install nvm in bash, we move config here.
   echo "export NVM_DIR=\"$HOME/.nvm\"" >>~/.zshrc
   echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >>~/.zshrc                   # This loads nvm
-  echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \\"$NVM_DIR/bash_completion\" >>~/.zshrc # This loads nvm bash_completion" >> ~/.zshrc
+  echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\" >>~/.zshrc # This loads nvm bash_completion" >> ~/.zshrc
 else
   echo "nvm had installed"
 fi
 
-
 # manager specific npm version
-nvm list-remote
-nvm -v
-nvm install v18.15.0
-node -v
-npm -version
+node -v 
+if [[ $? -ne 0 ]]; then 
+  nvm list-remote
+  nvm -v
+  nvm install v18.15.0
+  exec_cmd_status "install node and npm"
+else
+  node -v
+  npm -version
+fi
 npm install -g neovim
+exec_cmd_status "npm install neovim"
 
-# 6. install ruby and gem
-sudo apt-get install ruby-full
+# 6. install build-essential
+sudo apt-get install build-essential
+exec_cmd_status "install build-essential"
+
+sudo apt-get install gcc
+exec_cmd_status "install gcc"
+
+# 7. install ruby and gem
+sudo apt-get install ruby-dev
+exec_cmd_status "install ruby"
+
+sudo apt-get install rubygem
+exec_cmd_status "install gem for ruby"
+
+# 8. install gem neovim
 ruby -v
 gem environment
 gem install neovim
+exec_cmd_status "gem install neovim"
 
-# 7. install neovim 
+# 9. start neovim 
 echo "Neovim Install Success. U can Start And Try it"
