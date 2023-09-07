@@ -103,6 +103,7 @@ npm install -g neovim
 exec_cmd_status "npm install neovim"
 
 # 6. install build-essential
+echo "***************install build-essential"
 sudo apt-get install build-essential
 exec_cmd_status "install build-essential"
 
@@ -110,16 +111,17 @@ sudo apt-get install gcc
 exec_cmd_status "install gcc"
 
 # 7. install ruby and gem
+echo "***************install ruby and gem"
 sudo apt-get install ruby-dev
 exec_cmd_status "install ruby"
 
-sudo apt-get install rubygem
+sudo apt-get install rubygems
 exec_cmd_status "install gem for ruby"
 
 # 8. install gem neovim
 ruby -v
-gem environment
-gem install neovim
+# gem environment
+sudo gem install neovim
 exec_cmd_status "gem install neovim"
 
 # 9. start neovim 
