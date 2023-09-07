@@ -38,10 +38,10 @@ echo "nvim ver.is : $nvim_version"
 
 # 2. install dependency of neovim
 echo "***************install dependency"
-sudo pip install pynvim
+pip install pynvim
 exec_cmd_status "pynvim install"
 
-sudo pip install neovim
+pip install neovim
 exec_cmd_status "pip install neovim"
 
 # 3. install lazygit
