@@ -124,5 +124,22 @@ ruby -v
 sudo gem install neovim
 exec_cmd_status "gem install neovim"
 
+# 9. locate support utf-8
+sudo apt-get install locales 
+exec_cmd_status "install locales"
+echo "select en_US.UTF-8"
+
+sudo dpkg-reconfigure locales
+exec_cmd_status "set up utf8"
+
+# export Langs into rc
+if [[ ! $(grep 'LC_ALL' ~/.zshrc | grep "UTF-8") ]];then 
+  echo "export LC_ALL=en_US.UTF-8" >> ~/.zshrc
+  echo "export LANG=en_US.UTF-8" >> ~/.zshrc
+  echo "export LANGUAGE=en_US.UTF-8" >> ~/.zshrc
+else
+  echo "set up zshrc already"
+fi
+
 # 9. start neovim 
 echo "Neovim Install Success. U can Start And Try it"
