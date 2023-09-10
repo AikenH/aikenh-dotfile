@@ -121,8 +121,12 @@ exec_cmd_status "install gem for ruby"
 # 8. install gem neovim
 ruby -v
 # gem environment
-sudo gem install neovim
-exec_cmd_status "gem install neovim"
+if [[ ! $(gem list | grep neovim) ]];then
+  sudo gem install neovim
+  exec_cmd_status "gem install neovim"
+else
+  echo "neovim install by gem already"
+fi
 
 # 9. locate support utf-8
 sudo apt-get install locales 
