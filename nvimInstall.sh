@@ -149,5 +149,16 @@ else
   echo "set up zshrc already"
 fi
 
-# 9. start neovim 
+# 9. finish install neovim, install neovim.
 echo "Neovim Install Success. U can Start And Try it"
+
+# 10. [option] install nvchad.
+if [[ ! $(git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1) ]];then
+  echo "nvchad may have installed in this computer. move on"
+fi
+
+# move my configuration.
+echo "Move my config to nvim dir"
+cp -r nvchad_custom_file/lua/custom ~/.config/nvim/lua
+
+echo "nvim, nvchad, myconfig have setup."
