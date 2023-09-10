@@ -4,7 +4,7 @@ source ./FunctionList.sh
 # *****************************************************************************************
 # get the sus info
 # set proxy for wsl2
-proxy="172.30.240.1:8890"
+proxy="http://172.30.240.1:8890"
 
 # 0.install miniconda for python
 echo "1> install miniconda for neovim ****************************************************"
@@ -21,7 +21,7 @@ else
 fi
 
 # 1.install neovim (using unstable for diff sys)
-echo "2> install neovim *******************************************************************"
+echo -e "\n 2> install neovim *******************************************************************"
 grep -qr neovim /etc/apt/sources.list.d/* 
 if [[ $? -ne 0 ]];then
   sudo apt-get install software-propertier-common
@@ -37,7 +37,7 @@ nvim_version=$(nvim -v | grep -i nvim)
 echo "nvim ver.is : $nvim_version"
 
 # 2. install dependency of neovim
-echo "3> install dependency pynvim etc. ***************************************************"
+echo -e "\n 3> install dependency pynvim etc. ***************************************************"
 pip install pynvim
 exec_cmd_status "pynvim install"
 
@@ -45,7 +45,7 @@ pip install neovim
 exec_cmd_status "pip install neovim"
 
 # 3. install lazygit
-echo "4> install lazygit ******************************************************************"
+echo -e "\n 4> install lazygit ******************************************************************"
 lazygit -v
 if [[ $? -ne 0 ]];then 
   LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
@@ -61,7 +61,7 @@ else
 fi
 
 # 4. install ripgrep, fd-find
-echo "5> install ripgrep fd-find **********************************************************"
+echo -e "\n 5> install ripgrep fd-find **********************************************************"
 sudo apt-get install ripgrep
 exec_cmd_status "install ripgrep"
 
@@ -69,9 +69,8 @@ sudo apt-get install fd-find
 exec_cmd_status "install fd-find"
 
 # 5. install nvm to install nodejs.(need restart)
-echo "6> install nvm and nodejs, npm ******************************************************"
-source ~/.nvm/nvm.sh
-source ~/.profile
+echo -e "\n 6> install nvm and nodejs, npm ******************************************************"
+source ~/.nvm/nvm.sh && source ~/.profile
 nvm -v 
 if [[ $? -ne 0 ]]; then
   curl --proxy $proxy -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -103,7 +102,7 @@ npm install -g neovim
 exec_cmd_status "npm install neovim"
 
 # 6. install build-essential & gcc
-echo "7> install build-essential & gcc*****************************************************"
+echo -e "\n 7> install build-essential & gcc*****************************************************"
 sudo apt-get install build-essential
 exec_cmd_status "install build-essential"
 
@@ -111,7 +110,7 @@ sudo apt-get install gcc
 exec_cmd_status "install gcc"
 
 # 7. install ruby and gem
-echo "8> install ruby and gem *************************************************************"
+echo -e "\n 8> install ruby and gem *************************************************************"
 sudo apt-get install ruby-dev
 exec_cmd_status "install ruby"
 
@@ -129,13 +128,17 @@ else
 fi
 
 # 9. locate support utf-8
-echo "9> install locate & setup utf8 ******************************************************"
+echo -e "\n 9> install locate & setup utf8 ******************************************************"
 sudo apt-get install locales 
 exec_cmd_status "install locales"
 echo "select en_US.UTF-8"
 
-sudo dpkg-reconfigure locales
-exec_cmd_status "set up utf8"
+if [[ ! $(locale | grep -rni "utf-8") ]];then
+  sudo dpkg-reconfigure locales
+  exec_cmd_status "set up utf8"
+else
+  echo "locale utf8 install already"
+fi
 
 # export Langs into rc
 if [[ ! $(grep 'LC_ALL' ~/.zshrc | grep "UTF-8") ]];then 
