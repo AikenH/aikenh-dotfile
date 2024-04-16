@@ -83,7 +83,8 @@ set magic " using regular expressions then turn magic on.
 map <leader>ls :setlocal spell!<CR>
 
 " >>1-5 toggle paste mode
-map <leader>lp :setlocal paste!<CR>
+" map <leader>lp :setlocal paste!<CR>
+map <leader>lp :call TogglePasteMode()<CR>
 "}}}
 
 " -----------------------2.(UI)Basic Interaction setting{{{-----------------
@@ -104,9 +105,10 @@ set cmdheight=2 " set the cmd line height
 set laststatus=1 " enable:2 only in multi windows:1 off:0
 set ruler " show row,col of cursor in status line.
 " reference : https://blog.csdn.net/strategycn/article/details/7620261
-set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]\ [TIME=%{strftime('%c')}]
+" set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]\ [TIME=%{strftime('%c')}]
+set statusline=%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ Column:\ %c
 "set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
-"set statusline=%2*%n%m%r%h%w%*\ %F\ %1*[FORMAT=%2*%{&ff}:%{&fenc!=''?&fenc:&enc}%1*]\ [TYPE=%2*%Y%1*]\ [COL=%2*%03v%1*]\ [ROW=%2*%03l%1*/%3*%L(%p%%)%1*]\
+" set statusline=%2*%n%m%r%h%w%*\ %F\ %1*[FORMAT=%2*%{&ff}:%{&fenc!=''?&fenc:&enc}%1*]\ [TYPE=%2*%Y%1*]\ [COL=%2*%03v%1*]\ [ROW=%2*%03l%1*/%3*%L(%p%%)%1*]\
 
 " >>2-4 Command hint.
 set showcmd " show the command we just type in. like 2d
@@ -160,7 +162,8 @@ filetype indent on
 " show :echo $VIMRUNTIME to check vim path, then $VIMRUNTIME/colors are schemes we have.
 " u can type :colorscheme to try all the theme, then set it here.
 " colorscheme elflord
-colorscheme koehler
+" colorscheme koehler
+colorscheme ron
 set background=dark
 " Set extra options when running in GUI mode
 if has("gui_running")
@@ -389,14 +392,24 @@ func SetTitle()
     autocmd BufNewFile * normal G
 endfunction
 
-
+" >> Func7. Toggle paste and set list lcs for cpy
+" disable list lcs at paste mode, help us to copy content without it.
+function! TogglePasteMode()
+    if (&paste==1)
+        set nopaste
+        set list lcs=trail:·,tab:»·,nbsp:.,extends:#
+    else
+        set paste
+        setlocal nolist
+    endif
+endfunc
 "}}}
 
 " -----------------------9.auto comment{{{------------------------------
 " dictionary for mapping inline comment tokens to the corresponding files
 let g:inline_comment_dict = get(g:, 'inline_comment_dict',
             \{
-            \'//': ["js", "ts", "cpp", "c", "dart", "go"],
+            \'//': ["js", "ts", "cpp", "c", "dart", "go", "h"],
             \'#': ['py', 'sh'],
             \'"': ['vim', 'vimrc'],
             \})
@@ -407,7 +420,7 @@ let g:default_inline_comment = get(g:, 'default_inline_comment', '"')
 
 " dictionary for mapping block comment tokens to the corresponding files
 let g:block_comment_dict = get(g:, 'block_comment_dict', {
-        \'/*': ["js", "ts", "cpp", "c", "dart"],
+        \'/*': ["js", "ts", "cpp", "c", "dart", "css", "h"],
         \'"""': ['py'],
         \})
 
