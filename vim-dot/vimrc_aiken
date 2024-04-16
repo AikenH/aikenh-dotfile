@@ -1,25 +1,35 @@
 " ********************************************************************
-" @aikenhong
+" @AIKENHONG
 " rewrite vimrc in 20230521, this time we want make it sticky(keep update).
 " default place of vimrc is /usr/share/share/vim/vimrc & ~/.vimrc(top)
 " echo $MYVIMRC will show which config file we used.
-" if we want to choose specific config file. usingf vim -u <dotfile>
+" if we want to choose specific config file. use vim -u <dotfile>
+" after setting wildmenu u can using :colortheme to check out & try themes.
+" if u need cheetsheet in CN, try this one:
+" https://github.com/skywind3000/awesome-cheatsheets/blob/master/editors/vim.txt 
+
 " *********************************************************************
-" references:
+" REFERENCE: thx to those config file below, 
+" https://github.com/amix/vimrc/blob/master/vimrcs/basic.vim
 " https://www.ruanyifeng.com/blog/2018/09/vimrc.html
 " https://dougblack.io/words/a-good-vimrc.html
 " https://segmentfault.com/a/1190000021029480
 " https://zhuanlan.zhihu.com/p/98360630
 " https://gist.github.com/ldaidone/47c12526ece6ebb6e3e4
 " https://github.com/KarimElghamry/vim-auto-comment/blob/master/plugin/vim-auto-comment.vim
-" thx to all of those ,especial the last one, ez auto comment.
+
 " -----------------------0.vim Basic Setting{{{------------------------
 " >>0-0 basic info.
 let mapleader="\<space>"
+
 set nocompatible " no compatible with vi, just using vimscript
+
 set encoding=utf-8 "set the basic encoding
+
 set lazyredraw " redraw only when we need to.
-set backspace=indent,eol,start " help to del special character.(or =2)
+
+set backspace=indent,eol,start " help to del special character correctly.(or =2)
+set whichwrap+=<,>,h,l "after reach the first/last word in line, auto wrap(change line).
 
 syntax enable
 syntax on " enable syntax processing
@@ -102,9 +112,17 @@ set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [L
 set showcmd " show the command we just type in. like 2d
 set showmode " show insert or command mode now (seems like not working)
 
-" >>2-5 show Bottom CMD Menu
+" >>2-5 show Bottom CMD Menu & ignore compile file.
 set wildmenu " show completion list.
 " set wildmode=longest:list,full " show all possible cmd.
+
+" Ignore compiled files
+set wildignore=*.o,*~,*.pyc
+if has("win16") || has("win32")
+    set wildignore+=.git\*,.hg\*,.svn\*
+else
+    set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*/.DS_Store
+endif
 
 " >>2-6 set lcs.
 set list lcs=trail:·,tab:»·,nbsp:.,extends:#
@@ -140,8 +158,9 @@ filetype indent on
 
 " -----------------------4.Theme Setting{{{----------------------------
 " show :echo $VIMRUNTIME to check vim path, then $VIMRUNTIME/colors are schemes we have.
+" u can type :colorscheme to try all the theme, then set it here.
 " colorscheme elflord
-colorscheme desert
+colorscheme koehler
 set background=dark
 " Set extra options when running in GUI mode
 if has("gui_running")
@@ -186,7 +205,7 @@ nmap <leader>tp :tabp<cr>
 " >>5.6 show diff <filename>
 nnoremap <leader>sd :vert diffsplit
 
-" >>5.7 basic shortcut.
+" >>5.7 basic shortcut: HOME(Before) and END(End)
 nmap <C-a> <Home>
 nmap <C-e> <End>
 nmap <C-p> <PageUp>
