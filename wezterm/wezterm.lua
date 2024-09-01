@@ -75,16 +75,6 @@ c.window_frame = {
 c.show_tab_index_in_tab_bar = true
 c.switch_to_last_active_tab_when_closing_tab = true
 
--- launch_menu & default terminal setting.
-c.launch_menu = {
-    {
-        label = "WSL2",
-        args = { 'wsl.exe', '-u', 'aikenhong', '--cd', '/home/aikenhong' },
-    },
-    {   label = "PWSH7", args = { "pwsh.exe" }   },
-    {   label = "CMD",args = { "cmd.exe" }}
-}
-c.default_prog = { "wsl.exe ", "-u", "aikenhong", "--cd", "/home/aikenhong"  }
 
 
 require('tabbar.new-tab-button').setup()
@@ -104,6 +94,22 @@ if platform.is_mac then
 elseif platform.is_win then
   mod.SUPER = "ALT" -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = "ALT|CTRL"
+end
+
+-- launch_menu & default terminal setting.
+-- which should be change by platform.
+if platform.is_win then
+    c.launch_menu = {
+        {
+            label = "WSL2",
+            args = { 'wsl.exe', '-u', 'aikenhong', '--cd', '/home/aikenhong' },
+        },
+        {   label = "PWSH7", args = { "pwsh.exe" }   },
+        {   label = "CMD",args = { "cmd.exe" }}
+    }
+    c.default_prog = { "wsl.exe ", "-u", "aikenhong", "--cd", "/home/aikenhong"  }
+elseif platform.is_mac then
+  c.tab_bar_at_bottom = false
 end
 
 local keys = {
@@ -214,7 +220,7 @@ local keys = {
         }),
     },
 }
-  
+
 local key_tables = {
     resize_font = {
         { key = "k", action = act.IncreaseFontSize },
