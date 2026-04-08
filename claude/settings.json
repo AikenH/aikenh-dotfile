@@ -1,0 +1,19 @@
+{
+  "model": "sonnet[1m]",
+  "enabledPlugins": {
+    "claude-code-internal@claude-code-internal-plugins": true
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
