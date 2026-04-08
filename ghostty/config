@@ -1,0 +1,30 @@
+# background=000000
+background-opacity=0.6
+background-blur=20
+background-blur=true
+
+font-family = "Inconsolata LGC Nerd Font Mono"
+font-family = "LXGW WenKai Mono"
+font-feature="+liga,+calt"
+
+clipboard-read=allow
+clipboard-write=allow
+copy-on-select=clipboard
+
+macos-titlebar-style=tabs
+macos-window-shadow=true
+macos-icon=retro
+macos-icon-frame=chrome
+macos-titlebar-proxy-icon= hidden
+
+#theme= dark:dimidium,light:Monokai Pro Light Sun
+theme= dark:peppermint,light:Monokai Pro Light Sun
+
+# ssh connect need the terminfo for ghostty to work normal.
+shell-integration-features = ssh-terminfo,ssh-env,sudo
+
+# shaders
+custom-shader = shaders/cursor_warp.glsl
+cursor-style = block
+shell-integration-features = no-cursor
+cursor-style-blink = false
