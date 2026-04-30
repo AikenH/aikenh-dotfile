@@ -1,0 +1,130 @@
+# Don't print a new line at the start of the prompt
+add_newline = true
+# Pipes ╰─ ╭─
+# Powerline symbols                                     
+# Wedges 🭧🭒 🭣🭧🭓
+# Random noise 🬖🬥🬔🬗
+# Cool stuff 󰜥   
+
+# format = """
+# $directory $fill $git_branch $cmd_duration
+#  $character"""
+format = """
+$cmd_duration $directory$git_branch$git_status$python$bun$nodejs$fill$conda
+  $character"""
+
+[fill]
+symbol = ' '
+style = 'fg:245'
+
+# Replace the "❯" symbol in the prompt with "➜"
+[character]
+success_symbol = "[ ](bold fg:#a6e3a1)"
+error_symbol = "[ ](bold fg:#f38ba8)"
+vimcmd_symbol = "[ ](bold fg:#f9e2af)"
+vimcmd_replace_one_symbol = "[ ](bold fg:#cba6f7)"
+vimcmd_replace_symbol = "[ ](bold fg:#cba6f7)"
+vimcmd_visual_symbol = "[ ](bold fg:#fab387)"
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+[git_branch]
+style = "bg:#cba6f7"
+symbol = "󰘬"
+truncation_length = 12
+truncation_symbol = ""
+format = " 󰜥 [](bold fg:#cba6f7)[$symbol $branch(:$remote_branch)](fg:#1e1e2e bg:#cba6f7)[ ](bold fg:#cba6f7)"
+
+[git_commit]
+commit_hash_length = 4
+tag_symbol = " "
+
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+cherry_pick = "[🍒 PICKING](bold red)"
+
+[git_status]
+style = "fg:#cba6f7"
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?"
+stashed = "≡"
+modified = "!"
+staged = "+${count}"
+renamed = "»"
+deleted = "✘"
+
+[hostname]
+ssh_only = false
+format =  "[•$hostname](bg:252 bold fg:235)[](bold fg:252)"
+trim_at = ".companyname.com"
+disabled = false
+
+[line_break]
+disabled = false
+
+[memory_usage]
+disabled = true
+threshold = -1
+symbol = " "
+style = "bold dimmed green"
+
+[time]
+disabled = true
+format = '🕙[\[ $time \]]($style) '
+time_format = "%T"
+
+[username]
+style_user = "bold bg:252 fg:235"
+style_root = "red bold"
+format = "[](bold fg:252)[$user]($style)"
+disabled = false
+show_always = true
+
+[directory]
+home_symbol = " "
+read_only = "  "
+style = "bg:#89b4fa fg:#1e1e2e"
+truncation_length = 2
+truncation_symbol = ".../"
+format = '[](bold fg:#89b4fa)[󰉋 → $path]($style)[](bold fg:#89b4fa)'
+
+
+[directory.substitutions]
+"Desktop" = "  "
+"Documents" = "  "
+"Downloads" = "  "
+"Music" = " 󰎈 "
+"Pictures" = "  "
+"Videos" = "  "
+"GitHub" = " 󰊤 "
+
+[cmd_duration]
+min_time = 0
+format = '[](bold fg:#313244)[󰪢 $duration](bold bg:#313244 fg:#cdd6f4)[](bold fg:#313244)'
+
+[conda]
+symbol = "󰆇 "
+style = "bg:#fab387 fg:#1e1e2e"
+format = '[](bold fg:#fab387)[$symbol$environment]($style)[](bold fg:#fab387)'
+ignore_base = false
+
+[python]
+symbol = " "
+style = "bg:#a6e3a1 fg:#1e1e2e"
+format = '[](bold fg:#a6e3a1)[$symbol$version(\($virtualenv\))]($style)[](bold fg:#a6e3a1) '
+
+[nodejs]
+symbol = " "
+style = "bg:#89dceb fg:#1e1e2e"
+format = '[](bold fg:#89dceb)[$symbol$version]($style)[](bold fg:#89dceb) '
+
+[bun]
+symbol = "󰻑 "
+style = "bg:#f9e2af fg:#1e1e2e"
+format = '[](bold fg:#f9e2af)[$symbol$version]($style)[](bold fg:#f9e2af) '
