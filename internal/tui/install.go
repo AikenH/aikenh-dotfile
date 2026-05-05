@@ -116,6 +116,8 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 					}
 				}
 				if hasSelection {
+					// Resolve dependencies: auto-select any uninstalled deps
+					m.resolveDeps(app)
 					m.phase = PhaseConfirm
 				}
 			case "q", "esc":
@@ -171,6 +173,50 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// resolveDeps uses the dependency graph to auto-select uninstalled dependencies
+func (m *InstallModel) resolveDeps(app *App) {
+	// Collect all tool modules for the dep graph
+	var toolMods []core.Module
+	for _, item := range m.items {
+		toolMods = append(toolMods, item.module)
+	}
+
+	graph := core.NewDepGraph(toolMods)
+
+	// Collect selected module names
+	var selectedNames []string
+	for _, item := range m.items {
+		if item.selected {
+			selectedNames = append(selectedNames, item.module.Name)
+		}
+	}
+
+	// Resolve full dependency set
+	resolved, err := graph.TopoSortSubset(selectedNames, func(name string) bool {
+		// Check if this dep is already installed
+		for _, item := range m.items {
+			if item.module.Name == name && item.status == core.InstallStatusInstalled {
+				return true
+			}
+		}
+		return false
+	})
+	if err != nil {
+		return // cycle or error, just proceed with manual selection
+	}
+
+	// Auto-select resolved deps that aren't already selected
+	resolvedNames := make(map[string]bool)
+	for _, mod := range resolved {
+		resolvedNames[mod.Name] = true
+	}
+	for i, item := range m.items {
+		if resolvedNames[item.module.Name] && item.status != core.InstallStatusInstalled {
+			m.items[i].selected = true
+		}
+	}
 }
 
 func (m *InstallModel) startNextInstall(app *App) tea.Cmd {

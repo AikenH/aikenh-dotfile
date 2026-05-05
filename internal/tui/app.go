@@ -18,6 +18,7 @@ const (
 	ViewInstall
 	ViewSettings
 	ViewStatus
+	ViewProfile
 )
 
 // App is the root model
@@ -27,6 +28,7 @@ type App struct {
 	modules  ModulesModel
 	install  InstallModel
 	settings SettingsModel
+	profile  ProfileModel
 	state    *core.State
 	platform core.Platform
 	allMods  []core.Module
@@ -61,8 +63,14 @@ func NewApp() (*App, error) {
 	platform := core.DetectPlatform()
 	allMods = core.FilterByPlatform(allMods)
 
+	// Determine initial view: first run → profile selection
+	initialView := ViewHome
+	if isFirstRun(state) {
+		initialView = ViewProfile
+	}
+
 	app := &App{
-		view:     ViewHome,
+		view:     initialView,
 		state:    state,
 		platform: platform,
 		allMods:  allMods,
@@ -73,8 +81,14 @@ func NewApp() (*App, error) {
 	app.modules = NewModulesModel(allMods, state, repoRoot)
 	app.install = NewInstallModel(allMods, state)
 	app.settings = NewSettingsModel(state.Proxy)
+	app.profile = NewProfileModel(repoRoot)
 
 	return app, nil
+}
+
+// isFirstRun checks if this is a fresh install (no modules managed yet)
+func isFirstRun(state *core.State) bool {
+	return len(state.Modules) == 0 && len(state.GroupPicks) == 0
 }
 
 func (a App) Init() tea.Cmd {
@@ -88,7 +102,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return a, tea.Quit
 		}
-		// Only handle q/esc at the top level if not in a sub-view that handles its own
+		// Only handle q at the top level if on home screen
 		if a.view == ViewHome {
 			if msg.String() == "q" {
 				return a, tea.Quit
@@ -127,6 +141,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newSettings, cmd := a.settings.Update(msg, &a)
 		a.settings = newSettings
 		return a, cmd
+	case ViewProfile:
+		newProfile, cmd := a.profile.Update(msg, &a)
+		a.profile = newProfile
+		return a, cmd
 	case ViewStatus:
 		if keyMsg, ok := msg.(tea.KeyMsg); ok {
 			switch keyMsg.String() {
@@ -150,6 +168,8 @@ func (a App) View() string {
 		return a.install.View(a)
 	case ViewSettings:
 		return a.settings.View(a)
+	case ViewProfile:
+		return a.profile.View()
 	case ViewStatus:
 		return a.renderStatusView()
 	default:
@@ -168,6 +188,8 @@ func (a *App) NavigateTo(v View) {
 		a.install = NewInstallModel(a.allMods, a.state)
 	case ViewSettings:
 		a.settings = NewSettingsModel(a.state.Proxy)
+	case ViewProfile:
+		a.profile = NewProfileModel(a.repoRoot)
 	}
 }
 
