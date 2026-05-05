@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>dotsetup · Architecture Overview</title>
+<meta name="author" content="aikenhong">
+<meta name="description" content="dotsetup TUI 环境管理器架构与逻辑说明">
+<meta name="generator" content="Kami">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:  #f5f4ed;
+    --ivory:      #faf9f5;
+    --near-black: #141413;
+    --olive:      #504e49;
+    --stone:      #6b6a64;
+    --brand:      #1B365D;
+    --brand-tint: #EEF2F7;
+    --border:     #e8e6dc;
+    --serif: Charter, "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+    --mono:  "JetBrains Mono", "SF Mono", Consolas, monospace;
+  }
+
+  @page { size: A4 landscape; margin: 12mm; }
+
+  body {
+    font-family: var(--serif);
+    background: var(--parchment);
+    color: var(--near-black);
+    padding: 2rem 2.5rem;
+    line-height: 1.45;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: -0.3pt;
+  }
+
+  .header h1 span { color: var(--brand); }
+
+  .header .meta {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--stone);
+    letter-spacing: 0.1em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1.2rem;
+  }
+
+  .section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+    background: var(--ivory);
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 0.6rem;
+  }
+
+  .section h3 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--near-black);
+  }
+
+  /* Layer Stack */
+  .layer {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.7rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.75rem;
+    background: var(--parchment);
+  }
+
+  .layer.focal {
+    background: var(--brand-tint);
+    border-color: var(--brand);
+  }
+
+  .layer .num {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--stone);
+    width: 2rem;
+    flex-shrink: 0;
+  }
+
+  .layer.focal .num { color: var(--brand); }
+
+  .layer .name {
+    font-weight: 500;
+    min-width: 6rem;
+  }
+
+  .layer .desc {
+    color: var(--olive);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    margin-left: auto;
+  }
+
+  /* Module types */
+  .mod-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .mod-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    background: var(--parchment);
+    font-size: 0.7rem;
+  }
+
+  .mod-card.focal {
+    background: var(--brand-tint);
+    border-color: var(--brand);
+  }
+
+  .mod-card .type {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--stone);
+    text-transform: uppercase;
+  }
+
+  .mod-card.focal .type { color: var(--brand); }
+
+  .mod-card .items {
+    color: var(--olive);
+    font-size: 0.65rem;
+    margin-top: 0.2rem;
+  }
+
+  /* Scenarios */
+  .scenario-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.8rem;
+  }
+
+  .scenario {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scenario .label {
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 5.5rem;
+  }
+
+  .scenario .flow {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--olive);
+  }
+
+  .scenario .status {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    color: #4a8c5c;
+    letter-spacing: 0.05em;
+  }
+
+  /* File tree */
+  .tree {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--olive);
+    line-height: 1.6;
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
+
+  .tree .dir { color: var(--near-black); font-weight: 500; }
+  .tree .focal { color: var(--brand); }
+
+  /* Group note */
+  .group-note {
+    font-size: 0.65rem;
+    color: var(--olive);
+    border-left: 2px solid var(--brand);
+    padding-left: 0.5rem;
+    margin-top: 0.4rem;
+  }
+
+  .arrow { color: var(--stone); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>dotsetup</span> · Architecture &amp; Logic</h1>
+  <div class="meta">v0.2.0 · Go + Bubble Tea · 2026-05</div>
+</div>
+
+<div class="grid">
+
+  <!-- Section 1: Layer Architecture -->
+  <div class="section">
+    <p class="section-title">01 · System Architecture 系统分层</p>
+    <h3>CLI / TUI → Core → Executor → System</h3>
+
+    <div class="layer">
+      <span class="num">L1</span>
+      <span class="name">CLI / TUI</span>
+      <span class="desc">cmd/dotsetup · internal/tui (Bubble Tea)</span>
+    </div>
+    <div class="layer focal">
+      <span class="num">L2</span>
+      <span class="name">Core 业务层</span>
+      <span class="desc">module · linker · deps · state · installer · profile</span>
+    </div>
+    <div class="layer">
+      <span class="num">L3</span>
+      <span class="name">Executor 执行层</span>
+      <span class="desc">runner.go · shell out · proxy inject · timeout</span>
+    </div>
+    <div class="layer">
+      <span class="num">L4</span>
+      <span class="name">System 系统层</span>
+      <span class="desc">apt / brew / curl / symlink / fs ops</span>
+    </div>
+
+    <div class="group-note" style="margin-top: 0.8rem;">
+      <strong>数据流：</strong>modules/*.yaml <span class="arrow">→</span> Core 解析 <span class="arrow">→</span> State 读写 (~/.local/share/dotsetup/) <span class="arrow">→</span> Executor 执行 <span class="arrow">→</span> 系统变更
+    </div>
+  </div>
+
+  <!-- Section 2: Module Types -->
+  <div class="section">
+    <p class="section-title">02 · Module Types 模块类型与关系</p>
+    <h3>三种类型 · 互斥组 · 依赖图</h3>
+
+    <div class="mod-grid">
+      <div class="mod-card focal">
+        <div class="type">Config</div>
+        <div class="items">symlink / append<br>ghostty · vim · starship<br>zellij · claude</div>
+      </div>
+      <div class="mod-card">
+        <div class="type">Tool</div>
+        <div class="items">apt / brew / script<br>neovim · fzf · bat<br>lazygit · volta · go</div>
+      </div>
+      <div class="mod-card">
+        <div class="type">Plugin</div>
+        <div class="items">post_hook 驱动<br>vim-commentary<br>omz-plugins</div>
+      </div>
+    </div>
+
+    <div class="group-note">
+      <strong>Group 互斥组：</strong><br>
+      terminal-emulator: ghostty | wezterm | kaku | none<br>
+      multiplexer: zellij | tmux | none<br>
+      starship-style: minimal (pil) | powerline
+    </div>
+
+    <div class="group-note" style="margin-top: 0.3rem;">
+      <strong>依赖图：</strong>nvchad → neovim · oh-my-zsh → zsh<br>
+      安装时 TopoSort 自动解析，未安装的依赖自动加入安装队列
+    </div>
+  </div>
+
+  <!-- Section 3: Scenarios -->
+  <div class="section">
+    <p class="section-title">03 · Scenarios 六大场景执行流程</p>
+    <h3>从初始化到回滚的完整生命周期</h3>
+
+    <div class="scenario-list">
+      <div class="scenario">
+        <span class="label">A. 初始化</span>
+        <span class="flow">bootstrap → profile → install → link</span>
+        <span class="status">DONE</span>
+      </div>
+      <div class="scenario">
+        <span class="label">B. 增量安装</span>
+        <span class="flow">TUI select → deps resolve → install</span>
+        <span class="status">DONE</span>
+      </div>
+      <div class="scenario">
+        <span class="label">C. 更新配置</span>
+        <span class="flow">git pull → symlink 自动生效</span>
+        <span class="status">DONE</span>
+      </div>
+      <div class="scenario">
+        <span class="label">D. 冲突处理</span>
+        <span class="flow">detect conflict → backup → link</span>
+        <span class="status">DONE</span>
+      </div>
+      <div class="scenario">
+        <span class="label">E. 反向同步</span>
+        <span class="flow">sync-back (file + dir) → git diff</span>
+        <span class="status">DONE</span>
+      </div>
+      <div class="scenario">
+        <span class="label">F. 删除/回滚</span>
+        <span class="flow">unlink → restore backup → rm state</span>
+        <span class="status">DONE</span>
+      </div>
+    </div>
+
+    <div class="group-note" style="margin-top: 0.6rem;">
+      <strong>CLI 命令集：</strong>
+      <code>status</code> · <code>link &lt;mod&gt;</code> · <code>rollback &lt;mod&gt;</code> · <code>sync-back</code> · <code>--dry-run</code>
+    </div>
+  </div>
+
+  <!-- Section 4: File Structure -->
+  <div class="section">
+    <p class="section-title">04 · File Structure 项目结构</p>
+    <h3>~3900 行 Go · 24 tests · 4.9MB binary</h3>
+
+    <div class="tree">
+      <span class="dir">cmd/dotsetup/</span><br>
+      &nbsp; main.go <em>(CLI 入口 + 子命令)</em><br>
+      <span class="dir focal">internal/core/</span><br>
+      &nbsp; module.go <em>(YAML 解析)</em><br>
+      &nbsp; linker.go <em>(symlink 引擎)</em><br>
+      &nbsp; deps.go <em>(DAG + topo sort)</em><br>
+      &nbsp; state.go <em>(JSON 持久化)</em><br>
+      &nbsp; installer.go <em>(tool 安装)</em><br>
+      &nbsp; platform.go <em>(OS 检测)</em><br>
+      &nbsp; profile.go <em>(预设)</em><br>
+      <span class="dir">internal/executor/</span><br>
+      &nbsp; runner.go <em>(shell + proxy)</em><br>
+      <span class="dir">internal/tui/</span><br>
+      &nbsp; app · home · modules<br>
+      &nbsp; install · settings · profile<br>
+      <span class="dir">modules/</span><br>
+      &nbsp; configs.yaml · tools.yaml<br>
+      <span class="dir">profiles/</span><br>
+      &nbsp; essential · full<br>
+      bootstrap.sh · Makefile<br>
+      .github/workflows/ <em>(CI)</em>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

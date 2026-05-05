@@ -1,9 +1,9 @@
 # Config modules: symlink configuration files/directories to system paths
-# group: modules in the same group are mutually exclusive (pick one or none)
-# optional: true means this module can be skipped entirely (e.g., no GUI environment)
+# group: modules in the same group are mutually exclusive (same target path)
+# optional: true means this module can be skipped entirely
 
 modules:
-  # ─── Terminal Emulators (exclusive group, all optional) ───────────────────
+  # ─── Terminal Emulators (independent, can coexist) ──────────────────────
   - name: ghostty
     type: config
     description: "Ghostty terminal config + GLSL shaders"
@@ -12,7 +12,7 @@ modules:
     strategy: symlink
     link_mode: directory
     platforms: [darwin, linux]
-    group: terminal-emulator
+    group: ""
     optional: true
     tags: [terminal, gui]
     hooks:
@@ -26,7 +26,7 @@ modules:
     strategy: symlink
     link_mode: directory
     platforms: [darwin, linux]
-    group: terminal-emulator
+    group: ""
     optional: true
     tags: [terminal, gui]
     hooks:
@@ -40,13 +40,13 @@ modules:
     strategy: symlink
     link_mode: file
     platforms: [darwin, linux]
-    group: terminal-emulator
+    group: ""
     optional: true
     tags: [terminal, gui]
     hooks:
       post_link: ""
 
-  # ─── Multiplexers (exclusive group) ──────────────────────────────────────
+  # ─── Multiplexers (independent, can coexist) ────────────────────────────
   - name: zellij
     type: config
     description: "Zellij multiplexer config + layouts"
@@ -55,7 +55,7 @@ modules:
     strategy: symlink
     link_mode: directory
     platforms: [darwin, linux]
-    group: multiplexer
+    group: ""
     optional: true
     tags: [multiplexer, essential]
     hooks:
@@ -69,13 +69,14 @@ modules:
     strategy: symlink
     link_mode: file
     platforms: [darwin, linux]
-    group: multiplexer
+    group: ""
     optional: true
     tags: [multiplexer]
     hooks:
       post_link: ""
 
-  # ─── Shell & Prompt (independent) ───────────────────────────────────────
+  # ─── Shell & Prompt ─────────────────────────────────────────────────────
+  # starship-style is a TRUE exclusive group (same target: ~/.config/starship.toml)
   - name: starship
     type: config
     description: "Starship prompt - minimal style (recommended)"
@@ -149,9 +150,7 @@ modules:
     hooks:
       post_link: ""
 
-  # ─── File Manager (yazi replaced ranger) ─────────────────────────────
-  # Note: yazi config is managed at ~/.config/yazi/ but not yet in this repo
-  # ranger config kept for legacy Linux machines only
+  # ─── File Manager ───────────────────────────────────────────────────────
   - name: ranger
     type: config
     description: "Ranger file manager config (legacy)"

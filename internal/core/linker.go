@@ -84,7 +84,7 @@ func Link(module Module, repoRoot string, doBackup bool) LinkResult {
 	// Handle existing target
 	if _, err := os.Lstat(target); err == nil {
 		if doBackup {
-			backupPath, err := Backup(target)
+			backupPath, err := BackupWithName(module.Name, target)
 			if err != nil {
 				result.Error = fmt.Errorf("backup failed: %w", err)
 				return result
@@ -166,16 +166,20 @@ func Append(module Module, repoRoot string) LinkResult {
 	return result
 }
 
-// Backup copies a file/dir to the backup directory with timestamp
+// Backup copies a file/dir to the backup directory with module name + timestamp
 func Backup(path string) (string, error) {
+	return BackupWithName(filepath.Base(path), path)
+}
+
+// BackupWithName copies a file/dir using a specific name prefix (typically module name)
+func BackupWithName(name, path string) (string, error) {
 	backupDir := BackupDir()
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		return "", err
 	}
 
-	base := filepath.Base(path)
 	timestamp := time.Now().Format("20060102-150405")
-	backupPath := filepath.Join(backupDir, fmt.Sprintf("%s.%s", base, timestamp))
+	backupPath := filepath.Join(backupDir, fmt.Sprintf("%s.%s", name, timestamp))
 
 	// Use copy instead of move to preserve original until we confirm success
 	info, err := os.Lstat(path)

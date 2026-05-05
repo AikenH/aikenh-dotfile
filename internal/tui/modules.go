@@ -45,8 +45,8 @@ func (m *ModulesModel) buildItems(modules []core.Module) {
 	groups := core.GroupModules(modules)
 	independent := core.IndependentModules(modules)
 
-	// Add grouped modules first
-	groupOrder := []string{"terminal-emulator", "multiplexer", "starship-style"}
+	// Add grouped modules first (only truly exclusive groups)
+	groupOrder := []string{"starship-style"}
 	for _, gName := range groupOrder {
 		gMods, ok := groups[gName]
 		if !ok {
@@ -325,16 +325,12 @@ func (m ModulesModel) View(app App) string {
 
 func formatGroupName(name string) string {
 	switch name {
-	case "terminal-emulator":
-		return "── Terminal Emulators (pick one or none) ──"
-	case "multiplexer":
-		return "── Multiplexers (pick one or none) ──"
 	case "starship-style":
 		return "── Starship Style (pick one) ──"
 	case "independent":
 		return "── Modules ──"
 	default:
-		return fmt.Sprintf("── %s ──", name)
+		return fmt.Sprintf("── %s (pick one) ──", name)
 	}
 }
 
