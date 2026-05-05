@@ -44,6 +44,29 @@ proxyon [port]         # WSL2 专用：自动获取宿主机 IP 并设置代理
 gethostip              # 查看并 ping WSL2 宿主机 IP
 ```
 
+### FZF / FD / Bat (`shell/zshrc.common`, `bat/config`)
+- `shell/zshrc.common`：通用 shell 片段，包含 `fzf` 初始化、`fd` 作为默认文件源、`bat` 预览、以及 git helper：`gfb` / `gfc` / `gfs`
+- `bat/config` → `~/.config/bat/config`
+- 建议在本机 `~/.zshrc` 中显式 source：
+  ```bash
+  [ -f ~/Workspace/aikenh-dotfile/shell/zshrc.common ] && source ~/Workspace/aikenh-dotfile/shell/zshrc.common
+  ```
+- 当前行为：
+  - `Ctrl-T`：模糊选择文件并将路径插入命令行
+  - `Alt-C`：模糊选择目录并切换到该目录
+  - `gfb`：模糊选择 branch 并切换
+  - `gfc`：模糊浏览 commit，并用 `delta` 预览 `git show`
+  - `gfs`：模糊浏览已修改/已暂存/未跟踪文件；预览 diff 时用 `delta`，预览新文件时用 `bat`
+
+### Git / Delta (`git/.gitconfig`)
+- `git/.gitconfig`：只放通用显示增强，不包含身份信息
+- 建议在本机 `~/.gitconfig` 中 include：
+  ```gitconfig
+  [include]
+      path = ~/Workspace/aikenh-dotfile/git/.gitconfig
+  ```
+- 作用：`git diff` / `git log` / `git reflog` / `git show` 默认使用 `delta`
+
 ---
 
 ## Multiplexers
@@ -110,3 +133,22 @@ bash terminalInstall.sh
 # 安装 neovim 及全部依赖（conda、node/nvm、lazygit、ripgrep、fd、ruby、nvchad）
 bash nvimInstall.sh
 ```
+
+---
+
+## Roadmap
+
+### Current strategy
+- 这次新增的 `fzf` / `fd` / `bat` / `delta` 通用配置已沉淀到仓库中，供新机器复用
+- 新机器优先按照本文档进行 `source` / `include` / 软链接
+
+### Future direction
+- `terminalInstall.sh` 当前更适合作为历史脚本维护，不再继续堆叠新逻辑
+- 后续考虑重做一个模块化安装器：按 shell、git、bat、terminal、editor 等模块组织
+- 安装器优先提供轻量 TUI 选择体验，风格参考 `fzf` / `lazygit`：先选择要启用的模块，再执行安装、链接和配置写入
+- 模块设计目标：
+  - 安装依赖
+  - 链接或复制配置
+  - 追加必要的 source/include 语句
+  - 支持 macOS / Linux 的差异化处理
+- 长期方向是把“通用配置”和“机器私有配置”明确分层，减少一次性脚本对当前环境的直接修改
