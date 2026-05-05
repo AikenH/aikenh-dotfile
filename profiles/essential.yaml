@@ -1,0 +1,28 @@
+# Essential profile: minimal setup for headless Linux servers
+# No GUI terminal emulators, core CLI tools only
+name: essential
+description: "Core shell + editor for headless environments"
+
+modules:
+  # Shell
+  - zsh
+  - oh-my-zsh
+  - starship-bin
+  - starship
+  # Editor
+  - vim
+  # Search
+  - ripgrep
+  - fd
+  - fzf
+  - bat
+  # Git
+  - lazygit
+  - git-delta
+  # Monitor
+  - htop
+
+# Groups: skip GUI-only modules
+group_choices:
+  terminal-emulator: none
+  multiplexer: zellij

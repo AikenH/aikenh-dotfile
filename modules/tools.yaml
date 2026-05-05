@@ -1,0 +1,285 @@
+# Tool modules: install binary tools on the system
+# These are managed via package managers or direct download
+
+modules:
+  # ─── Shell & Prompt ──────────────────────────────────────────────────
+  - name: zsh
+    type: tool
+    description: "Zsh shell"
+    platforms: [linux]
+    tags: [shell, essential]
+    depends_on: []
+    install:
+      check: "zsh --version"
+      apt: "zsh"
+      brew: "zsh"
+    version:
+      command: "zsh --version"
+      pattern: 'zsh (\d+\.\d+\.?\d*)'
+
+  - name: oh-my-zsh
+    type: tool
+    description: "Oh My Zsh + plugins (autosuggestions, syntax-highlighting)"
+    platforms: [linux, darwin]
+    tags: [shell, essential]
+    depends_on: [zsh]
+    install:
+      check: "test -d ~/.oh-my-zsh"
+      script: |
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting 2>/dev/null || true
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions 2>/dev/null || true
+    version:
+      command: "git -C ~/.oh-my-zsh log --oneline -1 2>/dev/null | cut -c1-7"
+      pattern: '(.+)'
+
+  - name: starship-bin
+    type: tool
+    description: "Starship cross-shell prompt"
+    platforms: [darwin, linux]
+    tags: [shell, essential]
+    depends_on: []
+    install:
+      check: "starship --version"
+      script: "curl -sS https://starship.rs/install.sh | sh -s -- -y"
+      brew: "starship"
+    version:
+      command: "starship --version | head -1"
+      pattern: 'starship (\d+\.\d+\.\d+)'
+
+  # ─── Editors ────────────────────────────────────────────────────────
+  - name: neovim
+    type: tool
+    description: "Neovim editor"
+    platforms: [darwin, linux]
+    tags: [editor, essential]
+    depends_on: []
+    install:
+      check: "nvim --version"
+      apt: "neovim"
+      ppa: "neovim-ppa/unstable"
+      brew: "neovim"
+    version:
+      command: "nvim --version | head -1"
+      pattern: 'NVIM v(\d+\.\d+\.\d+)'
+
+  # ─── Search & File Tools ────────────────────────────────────────────
+  - name: ripgrep
+    type: tool
+    description: "Fast recursive grep (rg)"
+    platforms: [darwin, linux]
+    tags: [search, essential]
+    depends_on: []
+    install:
+      check: "rg --version"
+      apt: "ripgrep"
+      brew: "ripgrep"
+    version:
+      command: "rg --version | head -1"
+      pattern: 'ripgrep (\d+\.\d+\.\d+)'
+
+  - name: fd
+    type: tool
+    description: "Fast file finder (alternative to find)"
+    platforms: [darwin, linux]
+    tags: [search, essential]
+    depends_on: []
+    install:
+      check: "fd --version 2>/dev/null || fdfind --version 2>/dev/null"
+      apt: "fd-find"
+      brew: "fd"
+    version:
+      command: "fd --version 2>/dev/null || fdfind --version 2>/dev/null"
+      pattern: 'fd (\d+\.\d+\.\d+)'
+
+  - name: fzf
+    type: tool
+    description: "Fuzzy finder (used in shell + vim + git workflows)"
+    platforms: [darwin, linux]
+    tags: [search, essential]
+    depends_on: []
+    install:
+      check: "fzf --version"
+      apt: "fzf"
+      brew: "fzf"
+    version:
+      command: "fzf --version | head -1"
+      pattern: '(\d+\.\d+\.\d+)'
+
+  - name: bat
+    type: tool
+    description: "Cat with syntax highlighting (aliased as b)"
+    platforms: [darwin, linux]
+    tags: [file, essential]
+    depends_on: []
+    install:
+      check: "bat --version"
+      apt: "bat"
+      brew: "bat"
+    version:
+      command: "bat --version | head -1"
+      pattern: 'bat (\d+\.\d+\.\d+)'
+
+  - name: yazi
+    type: tool
+    description: "Terminal file manager (replaced ranger)"
+    platforms: [darwin, linux]
+    tags: [file]
+    depends_on: []
+    install:
+      check: "yazi --version"
+      brew: "yazi"
+      github_release: "sxyazi/yazi"
+      asset_pattern: "yazi-{arch}-unknown-{os}-musl.zip"
+    version:
+      command: "yazi --version | head -1"
+      pattern: 'Yazi (\S+)'
+
+  # ─── Git Tools ──────────────────────────────────────────────────────
+  - name: lazygit
+    type: tool
+    description: "Terminal UI for git commands"
+    platforms: [darwin, linux]
+    tags: [git, essential]
+    depends_on: []
+    install:
+      check: "lazygit --version"
+      github_release: "jesseduffield/lazygit"
+      asset_pattern: "lazygit_{version}_{os}_{arch}.tar.gz"
+      brew: "lazygit"
+    version:
+      command: "lazygit --version | grep -oP 'version=\\K[^,]+' 2>/dev/null || lazygit --version | head -1"
+      pattern: '(\d+\.\d+\.\d+)'
+
+  - name: git-delta
+    type: tool
+    description: "Syntax-highlighting pager for git diff"
+    platforms: [darwin, linux]
+    tags: [git, essential]
+    depends_on: []
+    install:
+      check: "delta --version"
+      apt: "git-delta"
+      brew: "git-delta"
+    version:
+      command: "delta --version"
+      pattern: 'delta (\d+\.\d+\.\d+)'
+
+  # ─── Monitoring ─────────────────────────────────────────────────────
+  - name: btm
+    type: tool
+    description: "Bottom - graphical system monitor"
+    platforms: [darwin, linux]
+    tags: [monitoring]
+    depends_on: []
+    install:
+      check: "btm --version"
+      github_release: "ClementTsang/bottom"
+      asset_pattern: "bottom_{version}_amd64.deb"
+      brew: "bottom"
+    version:
+      command: "btm --version"
+      pattern: 'bottom (\d+\.\d+\.\d+)'
+
+  - name: htop
+    type: tool
+    description: "Interactive process viewer"
+    platforms: [darwin, linux]
+    tags: [monitoring]
+    depends_on: []
+    install:
+      check: "htop --version"
+      apt: "htop"
+      brew: "htop"
+    version:
+      command: "htop --version | head -1"
+      pattern: 'htop (\d+\.\d+\.\d+)'
+
+  # ─── JS/Node Runtime ────────────────────────────────────────────────
+  - name: volta
+    type: tool
+    description: "JavaScript tool manager (manages node/npm/yarn)"
+    platforms: [darwin, linux]
+    tags: [dev-tools, nodejs, essential]
+    depends_on: []
+    install:
+      check: "volta --version"
+      script: "curl https://get.volta.sh | bash"
+      brew: "volta"
+    version:
+      command: "volta --version"
+      pattern: '(\d+\.\d+\.\d+)'
+
+  - name: bun
+    type: tool
+    description: "Fast JS runtime & bundler"
+    platforms: [darwin, linux]
+    tags: [dev-tools, nodejs]
+    depends_on: []
+    install:
+      check: "bun --version"
+      script: "curl -fsSL https://bun.sh/install | bash"
+      brew: "bun"
+    version:
+      command: "bun --version"
+      pattern: '(\d+\.\d+\.\d+)'
+
+  # ─── Python ─────────────────────────────────────────────────────────
+  - name: miniforge
+    type: tool
+    description: "Miniforge3 (conda-forge based Python manager)"
+    platforms: [darwin, linux]
+    tags: [dev-tools, python]
+    depends_on: []
+    install:
+      check: "conda --version"
+      script: |
+        case "$(uname -s)-$(uname -m)" in
+          Darwin-arm64) URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh" ;;
+          Darwin-x86_64) URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh" ;;
+          Linux-x86_64) URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh" ;;
+          Linux-aarch64) URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh" ;;
+        esac
+        curl -fsSL "$URL" -o /tmp/miniforge.sh
+        bash /tmp/miniforge.sh -b -p "$HOME/miniforge3"
+        rm /tmp/miniforge.sh
+    version:
+      command: "conda --version"
+      pattern: 'conda (\d+\.\d+\.\d+)'
+
+  # ─── Multiplexer Binary ─────────────────────────────────────────────
+  - name: zellij-bin
+    type: tool
+    description: "Zellij terminal multiplexer binary"
+    platforms: [darwin, linux]
+    tags: [multiplexer]
+    depends_on: []
+    install:
+      check: "zellij --version 2>/dev/null || test -x ~/Downloads/zellij"
+      brew: "zellij"
+      github_release: "zellij-org/zellij"
+      asset_pattern: "zellij-{arch}-{os}.tar.gz"
+    version:
+      command: "zellij --version 2>/dev/null || ~/Downloads/zellij --version 2>/dev/null"
+      pattern: 'zellij (\d+\.\d+\.\d+)'
+
+  # ─── Dev Tools ──────────────────────────────────────────────────────
+  - name: go
+    type: tool
+    description: "Go programming language"
+    platforms: [darwin, linux]
+    tags: [dev-tools]
+    depends_on: []
+    install:
+      check: "go version"
+      brew: "go"
+      script: |
+        VERSION=$(curl -s 'https://go.dev/VERSION?m=text' | head -1)
+        ARCH=$(uname -m); case $ARCH in x86_64) ARCH=amd64;; aarch64) ARCH=arm64;; esac
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        curl -fsSL "https://go.dev/dl/${VERSION}.${OS}-${ARCH}.tar.gz" -o /tmp/go.tar.gz
+        sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+        rm /tmp/go.tar.gz
+    version:
+      command: "go version"
+      pattern: 'go(\d+\.\d+\.\d+)'

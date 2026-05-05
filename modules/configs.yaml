@@ -1,0 +1,182 @@
+# Config modules: symlink configuration files/directories to system paths
+# group: modules in the same group are mutually exclusive (pick one or none)
+# optional: true means this module can be skipped entirely (e.g., no GUI environment)
+
+modules:
+  # ─── Terminal Emulators (exclusive group, all optional) ───────────────────
+  - name: ghostty
+    type: config
+    description: "Ghostty terminal config + GLSL shaders"
+    source: ghostty
+    target: ~/.config/ghostty
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: terminal-emulator
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  - name: wezterm
+    type: config
+    description: "WezTerm terminal config (Lua-based)"
+    source: wezterm
+    target: ~/.config/wezterm
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: terminal-emulator
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  - name: kaku
+    type: config
+    description: "Kaku editor/terminal config"
+    source: kaku/kaku.lua
+    target: ~/.config/kaku/kaku.lua
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: terminal-emulator
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  # ─── Multiplexers (exclusive group) ──────────────────────────────────────
+  - name: zellij
+    type: config
+    description: "Zellij multiplexer config + layouts"
+    source: zellij
+    target: ~/.config/zellij
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: multiplexer
+    optional: true
+    tags: [multiplexer, essential]
+    hooks:
+      post_link: ""
+
+  - name: tmux
+    type: config
+    description: "Tmux multiplexer config"
+    source: tmux/.tmux.conf.old
+    target: ~/.tmux.conf
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: multiplexer
+    optional: true
+    tags: [multiplexer]
+    hooks:
+      post_link: ""
+
+  # ─── Shell & Prompt (independent) ───────────────────────────────────────
+  - name: starship
+    type: config
+    description: "Starship prompt - minimal style (recommended)"
+    source: starship.toml.pil
+    target: ~/.config/starship.toml
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: starship-style
+    optional: false
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
+  - name: starship-powerline
+    type: config
+    description: "Starship prompt - Catppuccin powerline style"
+    source: starship.toml
+    target: ~/.config/starship.toml
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: starship-style
+    optional: false
+    tags: [shell]
+    hooks:
+      post_link: ""
+
+  - name: proxy
+    type: config
+    description: "Proxy shell functions (proxyall/proxyoff/proxyon)"
+    source: setproxy.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [linux]
+    group: ""
+    optional: true
+    guard: "# Proxy Function Import Flag"
+    tags: [shell, network]
+    hooks:
+      post_link: ""
+
+  # ─── Editors (independent, can coexist) ─────────────────────────────────
+  - name: vim
+    type: config
+    description: "Vim base config (.vimrc) + vim-commentary plugin"
+    source: vim-dot/vimrc_aiken
+    target: ~/.vimrc
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: false
+    tags: [editor, essential]
+    hooks:
+      post_link: "mkdir -p ~/.vim/pack/vendor/start && git clone https://github.com/tpope/vim-commentary.git ~/.vim/pack/vendor/start/vim-commentary 2>/dev/null || true"
+
+  - name: nvchad
+    type: config
+    description: "NvChad custom config (keymaps, LSP, UI)"
+    source: nvchad_custom_file/lua/custom
+    target: ~/.config/nvim/lua/custom
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [neovim]
+    tags: [editor]
+    hooks:
+      post_link: ""
+
+  # ─── File Manager (yazi replaced ranger) ─────────────────────────────
+  # Note: yazi config is managed at ~/.config/yazi/ but not yet in this repo
+  # ranger config kept for legacy Linux machines only
+  - name: ranger
+    type: config
+    description: "Ranger file manager config (legacy)"
+    source: ranger/rc.conf
+    target: ~/.config/ranger/rc.conf
+    strategy: symlink
+    link_mode: file
+    platforms: [linux]
+    group: ""
+    optional: true
+    tags: [filemanager, legacy]
+    hooks:
+      post_link: ""
+
+  # ─── Claude Code ────────────────────────────────────────────────────────
+  - name: claude
+    type: config
+    description: "Claude Code settings"
+    source: claude/settings.json
+    target: ~/.claude/settings.json
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [dev-tools]
+    hooks:
+      post_link: ""

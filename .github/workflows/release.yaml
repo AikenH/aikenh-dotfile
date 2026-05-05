@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build all platforms
+        run: |
+          mkdir -p dist
+          for os in linux darwin; do
+            for arch in amd64 arm64; do
+              GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o dist/dotsetup_${os}_${arch} ./cmd/dotsetup/
+            done
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
