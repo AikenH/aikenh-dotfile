@@ -112,13 +112,16 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.width = msg.Width
 		a.height = msg.Height
+		a.home.width = msg.Width
 		a.modules.width = msg.Width
 		a.modules.height = msg.Height
 		a.install.width = msg.Width
 		a.install.height = msg.Height
+		a.settings.width = msg.Width
+		a.profile.width = msg.Width
 
-	case installDoneMsg:
-		// Route install completion messages to install view
+	case installDoneMsg, logLineMsg, tickMsg:
+		// Route install-related messages directly to install view
 		newInstall, cmd := a.install.Update(msg, &a)
 		a.install = newInstall
 		return a, cmd
@@ -180,16 +183,22 @@ func (a App) View() string {
 // NavigateTo switches to a different view
 func (a *App) NavigateTo(v View) {
 	a.view = v
-	// Refresh sub-models when navigating
+	// Refresh sub-models when navigating; carry current terminal width
 	switch v {
 	case ViewModules:
 		a.modules = NewModulesModel(a.allMods, a.state, a.repoRoot)
+		a.modules.width = a.width
+		a.modules.height = a.height
 	case ViewInstall:
 		a.install = NewInstallModel(a.allMods, a.state)
+		a.install.width = a.width
+		a.install.height = a.height
 	case ViewSettings:
 		a.settings = NewSettingsModel(a.state.Proxy)
+		a.settings.width = a.width
 	case ViewProfile:
 		a.profile = NewProfileModel(a.repoRoot)
+		a.profile.width = a.width
 	}
 }
 
@@ -247,7 +256,7 @@ func (a App) renderStatusView() string {
 
 	b += "\n" + helpStyle.Render("q/Esc: back to menu")
 
-	return boxStyle.Render(b)
+	return boxStyle.Width(contentWidth(a.width)).Render(b)
 }
 
 func findRepoRoot() (string, error) {

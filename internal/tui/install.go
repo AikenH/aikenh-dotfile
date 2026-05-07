@@ -3,6 +3,8 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,26 +21,47 @@ const (
 	PhaseDone                        // finished
 )
 
+// maxLogLines is how many streaming log lines we keep in the scrolling area
+const maxLogLines = 6
+
 // InstallItem represents a tool in the install list
 type InstallItem struct {
-	module   core.Module
-	selected bool
-	status   core.InstallStatus
-	version  string
-	log      string
+	module    core.Module
+	selected  bool
+	status    core.InstallStatus
+	version   string
+	log       string        // short outcome string (e.g. "✓ installed")
+	startTime time.Time     // when this module started installing
+	elapsed   time.Duration // how long it took (set on completion)
 }
+
+// installDoneMsg signals that one install finished
+type installDoneMsg struct {
+	index  int
+	result core.InstallResult
+}
+
+// logLineMsg carries a single streamed log line from the runner
+type logLineMsg struct {
+	line string
+}
+
+// tickMsg is sent periodically to refresh elapsed-time display while running
+type tickMsg time.Time
 
 // InstallModel handles the tool installation view
 type InstallModel struct {
-	items     []InstallItem
-	cursor    int
-	phase     InstallPhase
-	progress  int    // index of currently installing module
-	message   string
-	logs      []string
-	installer *core.Installer
-	width     int
-	height    int
+	items       []InstallItem
+	cursor      int
+	phase       InstallPhase
+	progress    int      // index into the selected-items order (0-based)
+	currentIdx  int      // items[] index of the module currently installing
+	message     string
+	streamLogs  []string // last N lines streamed in real-time
+	installer   *core.Installer
+	logChan     chan string // receives streamed log lines
+	width       int
+	height      int
 }
 
 func NewInstallModel(modules []core.Module, state *core.State) InstallModel {
@@ -46,10 +69,8 @@ func NewInstallModel(modules []core.Module, state *core.State) InstallModel {
 		phase: PhaseSelect,
 	}
 
-	// Create installer to do live checks (not just state-based)
 	installer := core.NewInstaller(state.Proxy)
 
-	// Filter to only tool-type modules
 	for _, mod := range modules {
 		if mod.Type != core.TypeTool {
 			continue
@@ -58,24 +79,16 @@ func NewInstallModel(modules []core.Module, state *core.State) InstallModel {
 			module: mod,
 			status: core.InstallStatusMissing,
 		}
-		// Live check if already installed on this machine
 		if installer.CheckInstalled(mod) {
 			item.status = core.InstallStatusInstalled
 			item.version = installer.GetVersion(mod)
 		} else if state.IsInstalled(mod.Name) {
-			// State says installed but binary check failed → might be outdated/removed
 			item.status = core.InstallStatusMissing
 		}
 		m.items = append(m.items, item)
 	}
 
 	return m
-}
-
-// installDoneMsg signals that one install finished
-type installDoneMsg struct {
-	index  int
-	result core.InstallResult
 }
 
 func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
@@ -92,7 +105,6 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 					m.cursor++
 				}
 			case " ", "space":
-				// Only allow toggling uninstalled tools
 				if m.items[m.cursor].status != core.InstallStatusInstalled {
 					m.items[m.cursor].selected = !m.items[m.cursor].selected
 				}
@@ -107,7 +119,6 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 					m.items[i].selected = false
 				}
 			case "enter":
-				// Check if anything is selected
 				hasSelection := false
 				for _, item := range m.items {
 					if item.selected {
@@ -116,23 +127,34 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 					}
 				}
 				if hasSelection {
-					// Resolve dependencies: auto-select any uninstalled deps
 					m.resolveDeps(app)
 					m.phase = PhaseConfirm
 				}
 			case "q", "esc":
 				app.NavigateTo(ViewHome)
 			}
+
 		} else if m.phase == PhaseConfirm {
 			switch msg.String() {
 			case "y", "enter":
 				m.phase = PhaseRun
 				m.progress = 0
+				m.streamLogs = nil
+				m.logChan = make(chan string, 256)
 				m.installer = core.NewInstaller(app.state.Proxy)
-				return m, m.startNextInstall(app)
+				// Wire up log streaming via channel
+				ch := m.logChan
+				m.installer.SetLogFunc(func(line string) {
+					select {
+					case ch <- line:
+					default: // drop if full (non-blocking)
+					}
+				})
+				return m, tea.Batch(m.startNextInstall(app), m.drainLogs(), tick())
 			case "n", "esc":
 				m.phase = PhaseSelect
 			}
+
 		} else if m.phase == PhaseDone {
 			switch msg.String() {
 			case "enter", "q", "esc":
@@ -141,19 +163,16 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 		}
 
 	case installDoneMsg:
-		// Update item status
 		if msg.index < len(m.items) {
 			item := &m.items[msg.index]
+			item.elapsed = time.Since(item.startTime)
 			if msg.result.Error != nil {
 				item.log = fmt.Sprintf("✗ %v", msg.result.Error)
-				m.logs = append(m.logs, fmt.Sprintf("✗ %s: %v", item.module.Name, msg.result.Error))
 			} else {
 				item.status = msg.result.Status
 				item.version = msg.result.Version
 				item.log = "✓ installed"
-				m.logs = append(m.logs, fmt.Sprintf("✓ %s %s", item.module.Name, msg.result.Version))
 
-				// Update state
 				app.state.SetInstalled(item.module.Name, core.ModuleState{
 					Version:  msg.result.Version,
 					Strategy: "tool",
@@ -162,30 +181,72 @@ func (m InstallModel) Update(msg tea.Msg, app *App) (InstallModel, tea.Cmd) {
 			}
 		}
 
-		// Move to next
 		m.progress++
 		cmd := m.startNextInstall(app)
 		if cmd == nil {
 			m.phase = PhaseDone
 			m.message = fmt.Sprintf("Installation complete. %d modules processed.", m.countSelected())
+			return m, nil
 		}
-		return m, cmd
+		return m, tea.Batch(cmd, m.drainLogs())
+
+	case logLineMsg:
+		// Append streamed log text, split on newlines
+		for _, raw := range strings.Split(msg.line, "\n") {
+			raw = strings.TrimRight(raw, "\r")
+			if raw == "" {
+				continue
+			}
+			m.streamLogs = append(m.streamLogs, raw)
+			if len(m.streamLogs) > maxLogLines {
+				m.streamLogs = m.streamLogs[len(m.streamLogs)-maxLogLines:]
+			}
+		}
+		// Keep draining
+		if m.phase == PhaseRun {
+			return m, m.drainLogs()
+		}
+
+	case tickMsg:
+		// Just re-render (for elapsed time updates)
+		if m.phase == PhaseRun {
+			return m, tick()
+		}
 	}
 
 	return m, nil
 }
 
-// resolveDeps uses the dependency graph to auto-select uninstalled dependencies
+// tick returns a cmd that fires a tickMsg roughly every second
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
+// drainLogs polls the log channel without blocking
+func (m *InstallModel) drainLogs() tea.Cmd {
+	ch := m.logChan
+	if ch == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		line, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return logLineMsg{line: line}
+	}
+}
+
+// resolveDeps auto-selects uninstalled dependencies
 func (m *InstallModel) resolveDeps(app *App) {
-	// Collect all tool modules for the dep graph
 	var toolMods []core.Module
 	for _, item := range m.items {
 		toolMods = append(toolMods, item.module)
 	}
-
 	graph := core.NewDepGraph(toolMods)
 
-	// Collect selected module names
 	var selectedNames []string
 	for _, item := range m.items {
 		if item.selected {
@@ -193,9 +254,7 @@ func (m *InstallModel) resolveDeps(app *App) {
 		}
 	}
 
-	// Resolve full dependency set
 	resolved, err := graph.TopoSortSubset(selectedNames, func(name string) bool {
-		// Check if this dep is already installed
 		for _, item := range m.items {
 			if item.module.Name == name && item.status == core.InstallStatusInstalled {
 				return true
@@ -204,10 +263,9 @@ func (m *InstallModel) resolveDeps(app *App) {
 		return false
 	})
 	if err != nil {
-		return // cycle or error, just proceed with manual selection
+		return
 	}
 
-	// Auto-select resolved deps that aren't already selected
 	resolvedNames := make(map[string]bool)
 	for _, mod := range resolved {
 		resolvedNames[mod.Name] = true
@@ -220,33 +278,26 @@ func (m *InstallModel) resolveDeps(app *App) {
 }
 
 func (m *InstallModel) startNextInstall(app *App) tea.Cmd {
-	// Find next selected item
-	idx := 0
+	// Walk selected items in order; skip already-done (have log set)
 	count := 0
 	for i, item := range m.items {
-		if item.selected {
-			if count == m.progress {
-				idx = i
-				break
+		if !item.selected {
+			continue
+		}
+		if count == m.progress {
+			m.currentIdx = i
+			m.items[i].startTime = time.Now()
+			m.streamLogs = nil // clear log area for new module
+			mod := item.module
+			installer := m.installer
+			return func() tea.Msg {
+				result := installer.Install(mod)
+				return installDoneMsg{index: i, result: result}
 			}
-			count++
 		}
-		if i == len(m.items)-1 {
-			return nil // no more to install
-		}
+		count++
 	}
-
-	if count < m.progress {
-		return nil
-	}
-
-	mod := m.items[idx].module
-	installer := m.installer
-
-	return func() tea.Msg {
-		result := installer.Install(mod)
-		return installDoneMsg{index: idx, result: result}
-	}
+	return nil // all done
 }
 
 func (m InstallModel) countSelected() int {
@@ -258,6 +309,10 @@ func (m InstallModel) countSelected() int {
 	}
 	return n
 }
+
+// ──────────────────────────────────────────────
+// View
+// ──────────────────────────────────────────────
 
 func (m InstallModel) View(app App) string {
 	var b strings.Builder
@@ -285,28 +340,29 @@ func (m InstallModel) View(app App) string {
 
 	case PhaseRun:
 		b.WriteString("\n")
-		installed := 0
-		total := m.countSelected()
-		for _, item := range m.items {
-			if !item.selected {
-				continue
-			}
-			if item.log != "" {
-				installed++
-			}
-		}
-		b.WriteString(fmt.Sprintf("  Progress: %d / %d\n\n", installed, total))
-		m.renderProgress(&b)
+		m.renderRunPhase(&b, contentWidth(m.width))
 
 	case PhaseDone:
 		b.WriteString("\n")
 		b.WriteString(successStyle.Render(m.message))
 		b.WriteString("\n\n")
-		for _, log := range m.logs {
-			if strings.HasPrefix(log, "✓") {
-				b.WriteString(successStyle.Render("  " + log))
+		for _, item := range m.items {
+			if !item.selected {
+				continue
+			}
+			if strings.HasPrefix(item.log, "✓") {
+				ver := ""
+				if item.version != "" {
+					ver = " " + item.version
+				}
+				elapsed := ""
+				if item.elapsed > 0 {
+					elapsed = fmt.Sprintf("  %s", formatDuration(item.elapsed))
+				}
+				line := fmt.Sprintf("  ✓ %-20s%s%s", item.module.Name, ver, elapsed)
+				b.WriteString(successStyle.Render(line))
 			} else {
-				b.WriteString(errorStyle.Render("  " + log))
+				b.WriteString(errorStyle.Render(fmt.Sprintf("  ✗ %-20s  %s", item.module.Name, item.log)))
 			}
 			b.WriteString("\n")
 		}
@@ -314,7 +370,7 @@ func (m InstallModel) View(app App) string {
 		b.WriteString(helpStyle.Render("Enter/q: back to menu"))
 	}
 
-	return boxStyle.Render(b.String())
+	return boxStyle.Width(contentWidth(m.width)).Render(b.String())
 }
 
 func (m InstallModel) renderSelectList(b *strings.Builder) {
@@ -326,7 +382,6 @@ func (m InstallModel) renderSelectList(b *strings.Builder) {
 
 		var checkbox string
 		if item.status == core.InstallStatusInstalled {
-			// Installed: show locked indicator
 			checkbox = lipgloss.NewStyle().Foreground(colorGreen).Render("[✓]")
 		} else if item.selected {
 			checkbox = lipgloss.NewStyle().Foreground(colorBlue).Render("[✓]")
@@ -336,13 +391,11 @@ func (m InstallModel) renderSelectList(b *strings.Builder) {
 
 		name := item.module.Name
 		if item.status == core.InstallStatusInstalled {
-			// Dim the name for installed items
 			name = lipgloss.NewStyle().Foreground(colorSubtext).Render(name)
 		} else if i == m.cursor {
 			name = lipgloss.NewStyle().Foreground(colorLavender).Bold(true).Render(name)
 		}
 
-		// Status
 		var statusStr string
 		switch item.status {
 		case core.InstallStatusInstalled:
@@ -358,32 +411,117 @@ func (m InstallModel) renderSelectList(b *strings.Builder) {
 		}
 
 		desc := lipgloss.NewStyle().Foreground(colorSubtext).Render(item.module.Description)
-
 		b.WriteString(fmt.Sprintf("%s%s %s %s  %s\n", cursor, checkbox, name, statusStr, desc))
 	}
 }
 
-func (m InstallModel) renderProgress(b *strings.Builder) {
+func (m InstallModel) renderRunPhase(b *strings.Builder, cw int) {
+	total := m.countSelected()
+	done := 0
 	for _, item := range m.items {
+		if item.selected && item.log != "" {
+			done++
+		}
+	}
+
+	// ── progress counter ──────────────────────────────────────────────
+	counter := lipgloss.NewStyle().
+		Foreground(colorLavender).
+		Bold(true).
+		Render(fmt.Sprintf("%d / %d", done, total))
+	b.WriteString(fmt.Sprintf("  Installing Tools  %s\n", counter))
+
+	// ── progress bar — use ~60% of content width, min 20 ─────────────
+	barWidth := cw*6/10
+	if barWidth < 20 {
+		barWidth = 20
+	}
+	if barWidth > 60 {
+		barWidth = 60
+	}
+	filled := 0
+	if total > 0 {
+		filled = barWidth * done / total
+	}
+	bar := lipgloss.NewStyle().Foreground(colorBlue).Render(strings.Repeat("█", filled)) +
+		lipgloss.NewStyle().Foreground(colorSurface).Render(strings.Repeat("░", barWidth-filled))
+	pct := 0
+	if total > 0 {
+		pct = 100 * done / total
+	}
+	b.WriteString(fmt.Sprintf("  %s  %d%%\n\n", bar, pct))
+
+	// ── per-module status lines ───────────────────────────────────────
+	for i, item := range m.items {
 		if !item.selected {
 			continue
 		}
 
-		var icon string
+		var icon, nameStr, rightStr string
+
 		switch {
-		case item.log == "":
+		case item.log == "" && i == m.currentIdx:
+			// Currently installing
 			icon = lipgloss.NewStyle().Foreground(colorYellow).Render("⏳")
+			nameStr = lipgloss.NewStyle().Foreground(colorLavender).Bold(true).Render(item.module.Name)
+			elapsed := time.Since(item.startTime)
+			rightStr = lipgloss.NewStyle().Foreground(colorSubtext).
+				Render(fmt.Sprintf("installing...  %s", formatDuration(elapsed)))
+		case item.log == "":
+			// Pending
+			icon = "  "
+			nameStr = lipgloss.NewStyle().Foreground(colorSubtext).Render(item.module.Name)
+			rightStr = lipgloss.NewStyle().Foreground(colorOverlay).Render("pending")
 		case strings.HasPrefix(item.log, "✓"):
 			icon = lipgloss.NewStyle().Foreground(colorGreen).Render("✓")
+			nameStr = lipgloss.NewStyle().Foreground(colorText).Render(item.module.Name)
+			ver := item.version
+			if ver == "" {
+				ver = ""
+			} else {
+				ver = " " + ver
+			}
+			rightStr = lipgloss.NewStyle().Foreground(colorSubtext).
+				Render(fmt.Sprintf("%s  %s", ver, formatDuration(item.elapsed)))
 		default:
 			icon = lipgloss.NewStyle().Foreground(colorRed).Render("✗")
+			nameStr = lipgloss.NewStyle().Foreground(colorRed).Render(item.module.Name)
+			rightStr = lipgloss.NewStyle().Foreground(colorRed).Render(item.log)
 		}
 
-		name := lipgloss.NewStyle().Foreground(colorText).Render(item.module.Name)
-		b.WriteString(fmt.Sprintf("  %s %s", icon, name))
-		if item.log != "" && !strings.HasPrefix(item.log, "✓") {
-			b.WriteString(fmt.Sprintf("  %s", lipgloss.NewStyle().Foreground(colorSubtext).Render(item.log)))
-		}
-		b.WriteString("\n")
+		b.WriteString(fmt.Sprintf("  %s %-20s  %s\n", icon, nameStr, rightStr))
 	}
+
+	// ── streaming log area ───────────────────────────────────────────
+	if len(m.streamLogs) > 0 {
+		b.WriteString("\n")
+		dividerWidth := cw - 4
+		if dividerWidth < 20 {
+			dividerWidth = 20
+		}
+		divider := lipgloss.NewStyle().Foreground(colorOverlay).Render(strings.Repeat("─", dividerWidth))
+		b.WriteString("  " + divider + "\n")
+		logStyle := lipgloss.NewStyle().Foreground(colorSubtext)
+		maxLineWidth := cw - 6 // "  > " prefix = 4 chars + small margin
+		if maxLineWidth < 20 {
+			maxLineWidth = 20
+		}
+		for _, line := range m.streamLogs {
+			if utf8.RuneCountInString(line) > maxLineWidth {
+				runes := []rune(line)
+				line = string(runes[:maxLineWidth-3]) + "..."
+			}
+			b.WriteString("  " + logStyle.Render("> "+line) + "\n")
+		}
+	}
+}
+
+// formatDuration formats a duration as "1.2s" or "1m23s"
+func formatDuration(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	}
+	m := int(d.Minutes())
+	s := int(d.Seconds()) % 60
+	return fmt.Sprintf("%dm%ds", m, s)
 }

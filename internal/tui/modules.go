@@ -345,7 +345,7 @@ func (m ModulesModel) View(app App) string {
 		b.WriteString("\n")
 	}
 
-	return boxStyle.Render(b.String())
+	return boxStyle.Width(contentWidth(m.width)).Render(b.String())
 }
 
 func formatGroupName(name string) string {

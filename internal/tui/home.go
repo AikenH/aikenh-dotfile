@@ -10,6 +10,7 @@ import (
 type HomeModel struct {
 	choices []string
 	cursor  int
+	width   int
 }
 
 func NewHomeModel() HomeModel {
@@ -72,5 +73,5 @@ func (h HomeModel) View(app App) string {
 
 	s += "\n" + helpStyle.Render("↑/↓ navigate • enter select • q quit")
 
-	return boxStyle.Render(s)
+	return boxStyle.Width(contentWidth(h.width)).Render(s)
 }

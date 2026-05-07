@@ -2,6 +2,16 @@ package tui
 
 import "github.com/charmbracelet/lipgloss"
 
+// contentWidth returns the safe inner content width for a given terminal width.
+// boxStyle uses RoundedBorder (2 chars) + Padding(1,2) (4 chars) = 6 chars horizontal overhead.
+func contentWidth(termWidth int) int {
+	w := termWidth - 6
+	if w < 60 {
+		w = 60
+	}
+	return w
+}
+
 var (
 	// Colors (Catppuccin Mocha inspired)
 	colorBase     = lipgloss.Color("#1e1e2e")

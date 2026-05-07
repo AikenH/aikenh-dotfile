@@ -19,10 +19,11 @@ const (
 
 // SettingsModel handles the settings/configuration view
 type SettingsModel struct {
-	cursor    SettingsField
-	editing   bool
-	proxyBuf  string
-	message   string
+	cursor   SettingsField
+	editing  bool
+	proxyBuf string
+	message  string
+	width    int
 }
 
 func NewSettingsModel(proxy string) SettingsModel {
@@ -159,7 +160,7 @@ func (s SettingsModel) View(app App) string {
 		b.WriteString("\n" + helpStyle.Render("↑/↓ navigate • Enter select/edit • q back"))
 	}
 
-	return boxStyle.Render(b.String())
+	return boxStyle.Width(contentWidth(s.width)).Render(b.String())
 }
 
 // StatePath helper for display

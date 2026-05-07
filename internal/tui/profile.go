@@ -15,6 +15,7 @@ type ProfileModel struct {
 	profiles []*core.Profile
 	cursor   int
 	active   bool
+	width    int
 }
 
 func NewProfileModel(repoRoot string) ProfileModel {
@@ -102,5 +103,5 @@ func (p ProfileModel) View() string {
 
 	b.WriteString("\n" + helpStyle.Render("↑/↓ navigate • Enter select • Esc skip"))
 
-	return boxStyle.Render(b.String())
+	return boxStyle.Width(contentWidth(p.width)).Render(b.String())
 }
