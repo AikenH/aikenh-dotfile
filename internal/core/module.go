@@ -47,6 +47,8 @@ type InstallInfo struct {
 	Check         string `yaml:"check"`
 	Apt           string `yaml:"apt"`
 	PPA           string `yaml:"ppa"`
+	Dnf           string `yaml:"dnf"`
+	Pacman        string `yaml:"pacman"`
 	Brew          string `yaml:"brew"`
 	Script        string `yaml:"script"`
 	GithubRelease string `yaml:"github_release"`

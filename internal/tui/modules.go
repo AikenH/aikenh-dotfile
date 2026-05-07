@@ -41,6 +41,15 @@ func NewModulesModel(modules []core.Module, state *core.State, repoRoot string) 
 func (m *ModulesModel) buildItems(modules []core.Module) {
 	m.items = nil
 
+	// Link Configs view only handles TypeConfig modules; tools are managed in Install view
+	var configMods []core.Module
+	for _, mod := range modules {
+		if mod.Type == core.TypeConfig {
+			configMods = append(configMods, mod)
+		}
+	}
+	modules = configMods
+
 	// Collect groups and independent modules
 	groups := core.GroupModules(modules)
 	independent := core.IndependentModules(modules)
@@ -73,13 +82,22 @@ func (m *ModulesModel) buildItems(modules []core.Module) {
 		}
 	}
 
-	// Add independent modules
-	if len(independent) > 0 {
-		m.items = append(m.items, ModuleItem{
-			isGroup: true,
-			group:   "independent",
-		})
-		for _, mod := range independent {
+	// Split independent modules into symlink/copy configs vs append (shell init) configs
+	var symlinkMods, appendMods []core.Module
+	for _, mod := range independent {
+		if mod.Strategy == core.StrategyAppend {
+			appendMods = append(appendMods, mod)
+		} else {
+			symlinkMods = append(symlinkMods, mod)
+		}
+	}
+
+	addGroup := func(groupName string, mods []core.Module) {
+		if len(mods) == 0 {
+			return
+		}
+		m.items = append(m.items, ModuleItem{isGroup: true, group: groupName})
+		for _, mod := range mods {
 			status := core.CheckLinkStatus(mod, m.repoRoot)
 			selected := status == core.StatusLinked
 			m.items = append(m.items, ModuleItem{
@@ -89,6 +107,9 @@ func (m *ModulesModel) buildItems(modules []core.Module) {
 			})
 		}
 	}
+
+	addGroup("config-files", symlinkMods)
+	addGroup("shell-init", appendMods)
 }
 
 func (m ModulesModel) Update(msg tea.Msg, app *App) (ModulesModel, tea.Cmd) {
@@ -197,6 +218,10 @@ func (m *ModulesModel) applyChanges(app *App) {
 				errors = append(errors, fmt.Sprintf("%s: %v", mod.Name, result.Error))
 			} else {
 				linked++
+				// Run post_link hook
+				if hookErr := core.RunPostLink(mod, m.repoRoot); hookErr != nil {
+					errors = append(errors, fmt.Sprintf("%s post_link: %v", mod.Name, hookErr))
+				}
 				app.state.SetInstalled(mod.Name, core.ModuleState{
 					Strategy:   string(mod.Strategy),
 					TargetPath: core.ExpandPath(mod.Target),
@@ -327,8 +352,10 @@ func formatGroupName(name string) string {
 	switch name {
 	case "starship-style":
 		return "── Starship Style (pick one) ──"
-	case "independent":
-		return "── Modules ──"
+	case "config-files":
+		return "── Config Files (symlink) ──"
+	case "shell-init":
+		return "── Shell Init (append to ~/.zshrc) ──"
 	default:
 		return fmt.Sprintf("── %s (pick one) ──", name)
 	}

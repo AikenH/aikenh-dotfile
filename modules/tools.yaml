@@ -12,6 +12,8 @@ modules:
     install:
       check: "zsh --version"
       apt: "zsh"
+      dnf: "zsh"
+      pacman: "zsh"
       brew: "zsh"
     version:
       command: "zsh --version"
@@ -41,8 +43,12 @@ modules:
     depends_on: []
     install:
       check: "starship --version"
+      github_release: "starship/starship"
+      asset_pattern: "starship-{arch}-unknown-{os_lower}-musl.tar.gz"
       script: "curl -sS https://starship.rs/install.sh | sh -s -- -y"
       brew: "starship"
+      dnf: "starship"
+      pacman: "starship"
     version:
       command: "starship --version | head -1"
       pattern: 'starship (\d+\.\d+\.\d+)'
@@ -58,6 +64,8 @@ modules:
       check: "nvim --version"
       apt: "neovim"
       ppa: "neovim-ppa/unstable"
+      dnf: "neovim"
+      pacman: "neovim"
       brew: "neovim"
     version:
       command: "nvim --version | head -1"
@@ -73,6 +81,8 @@ modules:
     install:
       check: "rg --version"
       apt: "ripgrep"
+      dnf: "ripgrep"
+      pacman: "ripgrep"
       brew: "ripgrep"
     version:
       command: "rg --version | head -1"
@@ -87,7 +97,11 @@ modules:
     install:
       check: "fd --version 2>/dev/null || fdfind --version 2>/dev/null"
       apt: "fd-find"
+      dnf: "fd-find"
+      pacman: "fd"
       brew: "fd"
+      github_release: "sharkdp/fd"
+      asset_pattern: "fd-v{version}-{arch}-unknown-linux-musl.tar.gz"
     version:
       command: "fd --version 2>/dev/null || fdfind --version 2>/dev/null"
       pattern: 'fd (\d+\.\d+\.\d+)'
@@ -100,7 +114,10 @@ modules:
     depends_on: []
     install:
       check: "fzf --version"
-      apt: "fzf"
+      # apt fzf on Ubuntu 22.04 is only 0.29; fzf --zsh requires 0.48+
+      # prefer github release to get a current version
+      github_release: "junegunn/fzf"
+      asset_pattern: "fzf-{version}-{os_lower}_{arch_raw}.tar.gz"
       brew: "fzf"
     version:
       command: "fzf --version | head -1"
@@ -115,7 +132,11 @@ modules:
     install:
       check: "bat --version 2>/dev/null || batcat --version 2>/dev/null"
       apt: "bat"
+      dnf: "bat"
+      pacman: "bat"
       brew: "bat"
+      github_release: "sharkdp/bat"
+      asset_pattern: "bat-v{version}-{arch}-unknown-linux-musl.tar.gz"
     version:
       command: "bat --version 2>/dev/null || batcat --version 2>/dev/null"
       pattern: 'bat (\d+\.\d+\.\d+)'
@@ -160,6 +181,8 @@ modules:
     install:
       check: "delta --version"
       brew: "git-delta"
+      dnf: "git-delta"
+      pacman: "git-delta"
       github_release: "dandavison/delta"
       asset_pattern: "delta-{version}-{arch}-unknown-linux-musl.tar.gz"
     version:
@@ -191,6 +214,8 @@ modules:
     install:
       check: "htop --version"
       apt: "htop"
+      dnf: "htop"
+      pacman: "htop"
       brew: "htop"
     version:
       command: "htop --version | head -1"
@@ -263,6 +288,23 @@ modules:
     version:
       command: "zellij --version 2>/dev/null || ~/Downloads/zellij --version 2>/dev/null"
       pattern: 'zellij (\d+\.\d+\.\d+)'
+
+  # ─── Vim Plugins ────────────────────────────────────────────────────
+  - name: vim-commentary
+    type: tool
+    description: "Vim commentary plugin (gcc/gc to comment lines)"
+    platforms: [darwin, linux]
+    tags: [editor]
+    depends_on: []
+    install:
+      check: "test -d ~/.vim/pack/vendor/start/vim-commentary"
+      script: |
+        mkdir -p ~/.vim/pack/vendor/start
+        git clone https://github.com/tpope/vim-commentary.git \
+          ~/.vim/pack/vendor/start/vim-commentary
+    version:
+      command: "git -C ~/.vim/pack/vendor/start/vim-commentary log --oneline -1 2>/dev/null | cut -c1-7"
+      pattern: '(.+)'
 
   # ─── Dev Tools ──────────────────────────────────────────────────────
   - name: go

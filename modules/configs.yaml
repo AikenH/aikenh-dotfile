@@ -76,6 +76,22 @@ modules:
       post_link: ""
 
   # ─── Shell & Prompt ─────────────────────────────────────────────────────
+  - name: starship-init
+    type: config
+    description: "Starship prompt shell init (eval starship init zsh)"
+    source: shell/starship.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: false
+    depends_on: [starship-bin]
+    guard: "# Starship Init Flag"
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
   # starship-style is a TRUE exclusive group (same target: ~/.config/starship.toml)
   - name: starship
     type: config
@@ -195,7 +211,7 @@ modules:
     optional: false
     tags: [editor, essential]
     hooks:
-      post_link: "mkdir -p ~/.vim/pack/vendor/start && git clone https://github.com/tpope/vim-commentary.git ~/.vim/pack/vendor/start/vim-commentary 2>/dev/null || true"
+      post_link: ""
 
   - name: nvchad
     type: config

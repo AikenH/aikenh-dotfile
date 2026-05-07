@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -30,6 +31,15 @@ type LinkResult struct {
 // CheckLinkStatus checks the current state of a module's target
 func CheckLinkStatus(module Module, repoRoot string) LinkStatus {
 	target := ExpandPath(module.Target)
+
+	// Append-strategy modules: status is determined by guard presence, not symlink
+	if module.Strategy == StrategyAppend {
+		if module.Guard != "" && containsGuard(target, module.Guard) {
+			return StatusLinked
+		}
+		return StatusMissing
+	}
+
 	source := filepath.Join(repoRoot, module.Source)
 
 	info, err := os.Lstat(target)
@@ -198,6 +208,21 @@ func BackupWithName(name, path string) (string, error) {
 	}
 
 	return backupPath, nil
+}
+
+// RunPostLink executes the post_link hook script for a module, if set
+func RunPostLink(module Module, repoRoot string) error {
+	script := module.Hooks.PostLink
+	if script == "" {
+		return nil
+	}
+	cmd := exec.Command("bash", "-c", script)
+	cmd.Dir = repoRoot
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("post_link hook failed: %w\n%s", err, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // Restore copies a backup back to its original location
