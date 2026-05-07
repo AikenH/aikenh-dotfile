@@ -1,0 +1,259 @@
+# Config modules: symlink configuration files/directories to system paths
+# group: modules in the same group are mutually exclusive (same target path)
+# optional: true means this module can be skipped entirely
+
+modules:
+  # ─── Terminal Emulators (independent, can coexist) ──────────────────────
+  - name: ghostty
+    type: config
+    description: "Ghostty terminal config + GLSL shaders"
+    source: dotfiles/ghostty
+    target: ~/.config/ghostty
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  - name: wezterm
+    type: config
+    description: "WezTerm terminal config (Lua-based)"
+    source: dotfiles/wezterm
+    target: ~/.config/wezterm
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  - name: kaku
+    type: config
+    description: "Kaku editor/terminal config"
+    source: dotfiles/kaku/kaku.lua
+    target: ~/.config/kaku/kaku.lua
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [terminal, gui]
+    hooks:
+      post_link: ""
+
+  # ─── Multiplexers (independent, can coexist) ────────────────────────────
+  - name: zellij
+    type: config
+    description: "Zellij multiplexer config + layouts"
+    source: dotfiles/zellij
+    target: ~/.config/zellij
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [multiplexer, essential]
+    hooks:
+      post_link: ""
+
+  - name: tmux
+    type: config
+    description: "Tmux multiplexer config"
+    source: dotfiles/tmux/.tmux.conf.old
+    target: ~/.tmux.conf
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [multiplexer]
+    hooks:
+      post_link: ""
+
+  # ─── Shell & Prompt ─────────────────────────────────────────────────────
+  - name: starship-init
+    type: config
+    description: "Starship prompt shell init (eval starship init zsh)"
+    source: dotfiles/shell/starship.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: false
+    depends_on: [starship-bin]
+    guard: "# Starship Init Flag"
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
+  # starship-style is a TRUE exclusive group (same target: ~/.config/starship.toml)
+  - name: starship
+    type: config
+    description: "Starship prompt - minimal style (recommended)"
+    source: dotfiles/starship.toml.pil
+    target: ~/.config/starship.toml
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: starship-style
+    optional: false
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
+  - name: starship-powerline
+    type: config
+    description: "Starship prompt - Catppuccin powerline style"
+    source: dotfiles/starship.toml
+    target: ~/.config/starship.toml
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: starship-style
+    optional: false
+    tags: [shell]
+    hooks:
+      post_link: ""
+
+  - name: proxy
+    type: config
+    description: "Proxy shell functions (proxyall/proxyoff/proxyon)"
+    source: dotfiles/setproxy.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [linux]
+    group: ""
+    optional: true
+    guard: "# Proxy Function Import Flag"
+    tags: [shell, network]
+    hooks:
+      post_link: ""
+
+  - name: fzf-config
+    type: config
+    description: "FZF + fd + bat shell integration"
+    source: dotfiles/shell/fzf.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [fzf, fd, bat]
+    guard: "# FZF Integration Flag"
+    tags: [shell, search, essential]
+    hooks:
+      post_link: ""
+
+  - name: git-fzf
+    type: config
+    description: "Git + FZF interactive functions (gfb/gfc/gfs)"
+    source: dotfiles/shell/git-fzf.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [fzf, git-delta]
+    guard: "# Git-FZF Functions Flag"
+    tags: [shell, git, essential]
+    hooks:
+      post_link: ""
+
+  - name: aliases
+    type: config
+    description: "Common shell aliases (cl/g/ltr/nv...)"
+    source: dotfiles/shell/aliases.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    guard: "# Common Aliases Flag"
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
+  - name: git-delta-config
+    type: config
+    description: "Git pager/delta/merge config"
+    source: dotfiles/git/gitconfig-delta
+    target: ~/.config/git/delta.gitconfig
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [git-delta]
+    tags: [git, essential]
+    hooks:
+      post_link: "git config --global include.path ~/.config/git/delta.gitconfig 2>/dev/null || true"
+
+  # ─── Editors (independent, can coexist) ─────────────────────────────────
+  - name: vim
+    type: config
+    description: "Vim base config (.vimrc) + vim-commentary plugin"
+    source: dotfiles/vim/vimrc_aiken
+    target: ~/.vimrc
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: false
+    tags: [editor, essential]
+    hooks:
+      post_link: ""
+
+  - name: nvchad
+    type: config
+    description: "NvChad custom config (keymaps, LSP, UI)"
+    source: dotfiles/nvim/lua/custom
+    target: ~/.config/nvim/lua/custom
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [neovim]
+    tags: [editor]
+    hooks:
+      post_link: ""
+
+  # ─── File Manager ───────────────────────────────────────────────────────
+  - name: ranger
+    type: config
+    description: "Ranger file manager config (legacy)"
+    source: dotfiles/ranger/rc.conf
+    target: ~/.config/ranger/rc.conf
+    strategy: symlink
+    link_mode: file
+    platforms: [linux]
+    group: ""
+    optional: true
+    tags: [filemanager, legacy]
+    hooks:
+      post_link: ""
+
+  # ─── Claude Code ────────────────────────────────────────────────────────
+  - name: claude
+    type: config
+    description: "Claude Code settings"
+    source: dotfiles/claude/settings.json
+    target: ~/.claude/settings.json
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    tags: [dev-tools]
+    hooks:
+      post_link: ""

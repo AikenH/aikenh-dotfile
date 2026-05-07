@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run tests
+        run: go test ./... -v
+
+      - name: Vet
+        run: go vet ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          go build -o dotsetup_${{ matrix.goos }}_${{ matrix.goarch }} ./cmd/dotsetup/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotsetup_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: dotsetup_${{ matrix.goos }}_${{ matrix.goarch }}

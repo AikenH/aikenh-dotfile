@@ -1,34 +1,30 @@
 " ********************************************************************
-" @AIKENHONG
+" @aikenhong
 " rewrite vimrc in 20230521, this time we want make it sticky(keep update).
 " default place of vimrc is /usr/share/share/vim/vimrc & ~/.vimrc(top)
 " echo $MYVIMRC will show which config file we used.
-" if we want to choose specific config file. use vim -u <dotfile>
-" after setting wildmenu u can using :colortheme to check out & try themes.
-" if u need cheetsheet in CN, try this one:
-" https://github.com/skywind3000/awesome-cheatsheets/blob/master/editors/vim.txt 
-
+" if we want to choose specific config file. usingf vim -u <dotfile>
+"
+" plugins required (install on each machine):
+"   mkdir -p ~/.vim/pack/vendor/start
+"   git clone https://github.com/tpope/vim-commentary.git ~/.vim/pack/vendor/start/vim-commentary
 " *********************************************************************
-" REFERENCE: thx to those config file below, 
-" https://github.com/amix/vimrc/blob/master/vimrcs/basic.vim
+" references:
 " https://www.ruanyifeng.com/blog/2018/09/vimrc.html
 " https://dougblack.io/words/a-good-vimrc.html
 " https://segmentfault.com/a/1190000021029480
 " https://zhuanlan.zhihu.com/p/98360630
 " https://gist.github.com/ldaidone/47c12526ece6ebb6e3e4
 " https://github.com/KarimElghamry/vim-auto-comment/blob/master/plugin/vim-auto-comment.vim
-
+" thx to all of those ,especial the last one, ez auto comment.
 " -----------------------0.vim Basic Setting{{{------------------------
 " >>0-0 basic info.
 let mapleader="\<space>"
-
 set nocompatible " no compatible with vi, just using vimscript
-
 set encoding=utf-8 "set the basic encoding
-
 set lazyredraw " redraw only when we need to.
+set backspace=indent,eol,start " help to del special character.(or =2)
 
-set backspace=indent,eol,start " help to del special character correctly.(or =2)
 set whichwrap+=<,>,h,l "after reach the first/last word in line, auto wrap(change line).
 
 syntax enable
@@ -48,7 +44,20 @@ set autochdir " change workspace when we swtich file, when we open multi-file in
 set noswapfile " donot create .swp file
 set undofile " keep the undo history in file.
 set undodir=~/.vim/.undo//
+" Auto-create undo directory if it doesn't exist
+let s:undodir = expand('~/.vim/.undo')
+if !isdirectory(s:undodir)
+    call mkdir(s:undodir, 'p')
+endif
 set history=1000 " how many operation vim should record
+
+" >>0-3 Ghostty + Zellij compatibility
+" Vim 9.1 detects 'ghostty' in TERM and enables Kitty Keyboard Protocol,
+" but key-release events get misinterpreted as Delete through Zellij.
+" Override TERM to plain xterm-256color to avoid KKP auto-detection.
+if $ZELLIJ != ""
+    set term=xterm-256color
+endif
 "}}}
 
 " -----------------------1.Enable Basic Function(Mouse, Clipboard,...){{{
@@ -102,7 +111,7 @@ set scrolloff=10 " the position of cursor from the top/bnottom when scroll verti
 
 " >>2-3 Status Line Setting
 set cmdheight=2 " set the cmd line height
-set laststatus=1 " enable:2 only in multi windows:1 off:0
+set laststatus=2 " enable:2 only in multi windows:1 off:0
 set ruler " show row,col of cursor in status line.
 " reference : https://blog.csdn.net/strategycn/article/details/7620261
 " set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]\ [TIME=%{strftime('%c')}]
@@ -114,17 +123,9 @@ set statusline=%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ Column:\ 
 set showcmd " show the command we just type in. like 2d
 set showmode " show insert or command mode now (seems like not working)
 
-" >>2-5 show Bottom CMD Menu & ignore compile file.
+" >>2-5 show Bottom CMD Menu
 set wildmenu " show completion list.
 " set wildmode=longest:list,full " show all possible cmd.
-
-" Ignore compiled files
-set wildignore=*.o,*~,*.pyc
-if has("win16") || has("win32")
-    set wildignore+=.git\*,.hg\*,.svn\*
-else
-    set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*/.DS_Store
-endif
 
 " >>2-6 set lcs.
 set list lcs=trail:·,tab:»·,nbsp:.,extends:#
@@ -162,9 +163,9 @@ filetype indent on
 " show :echo $VIMRUNTIME to check vim path, then $VIMRUNTIME/colors are schemes we have.
 " u can type :colorscheme to try all the theme, then set it here.
 " colorscheme elflord
-" colorscheme koehler
-colorscheme ron
-set background=dark
+colorscheme habamax
+" colorscheme ron
+" set background=dark
 " Set extra options when running in GUI mode
 if has("gui_running")
     set guioptions-=T
@@ -208,7 +209,7 @@ nmap <leader>tp :tabp<cr>
 " >>5.6 show diff <filename>
 nnoremap <leader>sd :vert diffsplit
 
-" >>5.7 basic shortcut: HOME(Before) and END(End)
+" >>5.7 basic shortcut.
 nmap <C-a> <Home>
 nmap <C-e> <End>
 nmap <C-p> <PageUp>
@@ -261,6 +262,15 @@ augroup configgroup
     autocmd FileType ruby setlocal softtabstop=2
     autocmd FileType ruby setlocal commentstring=#\ %s
     autocmd FileType python setlocal commentstring=#\ %s
+    autocmd FileType bash setlocal commentstring=#\ %s
+    autocmd FileType zsh setlocal commentstring=#\ %s
+    autocmd FileType lua setlocal commentstring=--\ %s
+    autocmd FileType yaml setlocal commentstring=#\ %s
+    autocmd FileType json setlocal commentstring=#\ %s
+    autocmd FileType toml setlocal commentstring=#\ %s
+    autocmd FileType sql setlocal commentstring=--\ %s
+    autocmd FileType dockerfile setlocal commentstring=#\ %s
+    autocmd FileType make setlocal commentstring=#\ %s
     autocmd BufEnter *.cls setlocal filetype=java
     autocmd BufEnter *.zsh-theme setlocal filetype=zsh
     autocmd BufEnter Makefile setlocal noexpandtab
@@ -329,7 +339,6 @@ endfunc
 " >> Func6. Add Header for file.
 autocmd BufNewFile *.cpp,*.[ch],*.sh,*.py,*.md exec ":call SetTitle()"
 func SetTitle()
-    "如果文件类型为.sh文件
     if &filetype == 'sh'
         call setline(1, "# File Name: ".expand("%"))
         call append(line("."), "# Author: AikenHong")
@@ -388,12 +397,11 @@ func SetTitle()
         call append(line(".")+10, "categories: ")
         call append(line(".")+11, "---")
     endif
-    "新建文件后，自动定位到文件末尾
     autocmd BufNewFile * normal G
 endfunction
 
+
 " >> Func7. Toggle paste and set list lcs for cpy
-" disable list lcs at paste mode, help us to copy content without it.
 function! TogglePasteMode()
     if (&paste==1)
         set nopaste
@@ -406,119 +414,12 @@ endfunc
 "}}}
 
 " -----------------------9.auto comment{{{------------------------------
-" dictionary for mapping inline comment tokens to the corresponding files
-let g:inline_comment_dict = get(g:, 'inline_comment_dict',
-            \{
-            \'//': ["js", "ts", "cpp", "c", "dart", "go", "h"],
-            \'#': ['py', 'sh'],
-            \'"': ['vim', 'vimrc'],
-            \})
-
-" variable for setting the default inlink comment token if the current file is
-" not found in the dictionary
-let g:default_inline_comment = get(g:, 'default_inline_comment', '"')
-
-" dictionary for mapping block comment tokens to the corresponding files
-let g:block_comment_dict = get(g:, 'block_comment_dict', {
-        \'/*': ["js", "ts", "cpp", "c", "dart", "css", "h"],
-        \'"""': ['py'],
-        \})
-
-
-" variable for setting the default inlink comment token if the current file is
-" not found in the dictionary
-let g:default_block_comment = get(g:, 'default_block_comment', '/*')
-
-" ---------------------------------- "
-" function to reverse a given string
-function! s:ReverseString(input_string)
-    let output = ''
-    for i in split(a:input_string, '\zs')
-    let output = i . output
-    endfor
-    return output
-endfunction
-
-" ---------------------------------- "
-"   function for inline auto commenting
-function! s:AutoInlineComment()
-"   get extension
-    let extension = expand('%:e')
-    let comment = g:default_inline_comment
-
-"   check file extension against each entry in inline comment dictionary
-    for item in items(g:inline_comment_dict)
-    if index(item[1], extension) >= 0
-        let comment = item[0]
-        break
-    endif
-    endfor
-
-"   trim leading white spaces
-    let current_line = substitute(getline("."), '^[ ]*', '' , 'g')
-
-"   check if current line is commented or not
-    if(current_line[:len(comment) - 1] != comment)
-    execute ':s/^/' . escape(comment, '^$.*?/\[]') . ' /'
-    else
-    execute ':s/^\( *\)' . escape(comment, '^$.*?/\[]') . '\( \?\)//'
-    endif
-
-    :noh
-endfunction
-
-
-" ---------------------------------- "
-"   function for block auto commenting
-function! s:AutoBlockComment() range
-"   get extension
-    let extension = expand('%:e')
-    let comment = g:default_block_comment
-
-"   check file extension against each entry in block comment dictionary
-    for item in items(g:block_comment_dict)
-    if index(item[1], extension) >= 0
-        let comment = item[0]
-        break
-    endif
-    endfor
-"   reverse the comment token
-    let reverse_comment = s:ReverseString(comment)
-
-"   get first and last tokens
-    let firstline_token = substitute(getline(a:firstline), '^[ ]*', '', 'g')[:len(comment) - 1]
-    let lastline_token = substitute(getline(a:lastline), '[ ]*$', '', 'g')[-len(comment):]
-
-"   check if the block is commented and parse accordingly
-    if (firstline_token == comment && lastline_token == reverse_comment)
-    execute ':'. a:firstline . ',' . a:firstline . 's/^\( *\)' . escape(comment, '^$.*?/\[]') . '\( \?\)//'
-    execute ':'. a:lastline . ',' . a:lastline . 's/\s\?' . escape(reverse_comment, '^$.*?/\[]') . '$//'
-    else
-    execute ':'. a:firstline . ',' . a:firstline . 's/^/' . escape(comment, '^$.*?/\[]') . ' /'
-    execute ':'. a:lastline . ',' . a:lastline . 's/$/ ' . escape(reverse_comment, '^$.*?/\[]') . '/'
-    endif
-endfunction
-
-
-" ---------------------------------- "
-"  define commands
-command! -range AutoInlineComment <line1>,<line2>call <sid>AutoInlineComment()
-command! -range AutoBlockComment <line1>,<line2>call <sid>AutoBlockComment()
-
-" ---------------------------------- "
-"  define default mappings
-if !exists('g:autocomment_map_keys')
-    let g:autocomment_map_keys = 1
-endif
-
-if (g:autocomment_map_keys)
-    vnoremap <leader>/ :AutoInlineComment<CR>
-    nnoremap <leader>/ :AutoInlineComment<CR>
-
-    vnoremap <leader>, :AutoBlockComment<CR>
-    nnoremap <leader>, :AutoBlockComment<CR>
+" rely on vim-commentary + native commentstring; no custom engine needed
+" <leader>/ : comment/uncomment current line or visual range (vim-commentary)
+if get(g:, 'autocomment_map_keys', 1)
+    nmap <leader>/  <Plug>CommentaryLine
+    xmap <leader>/  <Plug>Commentary
 endif
 "}}}
 
 " This Config will finish here, but like fold and indent is not done. so we will catch up in this file.
-

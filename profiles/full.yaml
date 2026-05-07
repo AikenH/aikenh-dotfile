@@ -1,0 +1,40 @@
+# Full profile: complete dev workstation setup
+name: full
+description: "Full development workstation (all tools + configs)"
+
+modules:
+  # Shell
+  - zsh
+  - oh-my-zsh
+  - starship-bin
+  - starship
+  # Editors
+  - vim
+  - neovim
+  - nvchad
+  # Search & File
+  - ripgrep
+  - fd
+  - fzf
+  - bat
+  - yazi
+  # Git
+  - lazygit
+  - git-delta
+  # Monitor
+  - btm
+  - htop
+  # Dev runtimes
+  - volta
+  - bun
+  - miniforge
+  - go
+  # Multiplexer bin
+  - zellij-bin
+  # Claude
+  - claude
+
+# Groups: user will be prompted to choose
+group_choices:
+  terminal-emulator: prompt  # ask user: ghostty / wezterm / kaku / none
+  multiplexer: prompt        # ask user: zellij / tmux

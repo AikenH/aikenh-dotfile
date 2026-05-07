@@ -1,0 +1,472 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/aikenhong/dotsetup/internal/core"
+	"github.com/aikenhong/dotsetup/internal/tui"
+)
+
+var dryRun bool
+
+func main() {
+	// Check for --dry-run flag
+	args := filterFlags(os.Args[1:])
+
+	if len(args) > 0 {
+		switch args[0] {
+		case "status":
+			runStatus()
+			return
+		case "sync-back":
+			runSyncBack()
+			return
+		case "link":
+			if len(args) > 1 {
+				runLinkDirect(args[1:])
+				return
+			}
+			fmt.Fprintln(os.Stderr, "Usage: dotsetup link <module> [module...]")
+			os.Exit(1)
+		case "rollback":
+			if len(args) > 1 {
+				runRollback(args[1:])
+				return
+			}
+			fmt.Fprintln(os.Stderr, "Usage: dotsetup rollback <module> [module...]")
+			os.Exit(1)
+			os.Exit(1)
+		case "help", "--help", "-h":
+			printHelp()
+			return
+		case "version", "--version":
+			fmt.Println("dotsetup v0.2.0")
+			return
+		}
+	}
+
+	// Default: launch TUI
+	app, err := tui.NewApp()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	p := tea.NewProgram(app, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running TUI: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// filterFlags extracts --dry-run and returns remaining args
+func filterFlags(args []string) []string {
+	var remaining []string
+	for _, arg := range args {
+		if arg == "--dry-run" || arg == "-n" {
+			dryRun = true
+		} else {
+			remaining = append(remaining, arg)
+		}
+	}
+	return remaining
+}
+
+func findRoot() string {
+	cwd, _ := os.Getwd()
+	dir := cwd
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "modules")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return cwd
+}
+
+func runStatus() {
+	repoRoot := findRoot()
+	platform := core.DetectPlatform()
+	fmt.Printf("Platform: %s\n\n", platform.String())
+
+	modulesDir := filepath.Join(repoRoot, "modules")
+	allMods, err := core.LoadAllModules(modulesDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading modules: %v\n", err)
+		os.Exit(1)
+	}
+	allMods = core.FilterByPlatform(allMods)
+
+	state, _ := core.LoadState()
+	installer := core.NewInstaller(state.Proxy)
+
+	fmt.Printf("%-20s %-10s %-10s %s\n", "MODULE", "TYPE", "STATUS", "TARGET")
+	fmt.Printf("%-20s %-10s %-10s %s\n", "------", "----", "------", "------")
+
+	for _, mod := range allMods {
+		var statusIcon string
+		var statusLabel string
+		var extra string
+
+		if mod.Type == core.TypeTool {
+			if installer.CheckInstalled(mod) {
+				statusIcon = "✓"
+				statusLabel = "installed"
+				ver := installer.GetVersion(mod)
+				if ver != "" {
+					extra = fmt.Sprintf(" [%s]", ver)
+				}
+			} else {
+				statusIcon = "○"
+				statusLabel = "missing"
+			}
+		} else {
+			status := core.CheckLinkStatus(mod, repoRoot)
+			switch status {
+			case core.StatusLinked:
+				statusIcon = "✓"
+				statusLabel = string(status)
+			case core.StatusMissing:
+				statusIcon = "○"
+				statusLabel = string(status)
+			case core.StatusConflict:
+				statusIcon = "⚠"
+				statusLabel = string(status)
+			case core.StatusStale:
+				statusIcon = "↻"
+				statusLabel = string(status)
+			}
+		}
+
+		group := ""
+		if mod.Group != "" {
+			group = fmt.Sprintf(" (%s)", mod.Group)
+		}
+
+		target := ""
+		if mod.Target != "" {
+			target = core.ExpandPath(mod.Target)
+		}
+
+		fmt.Printf("%-20s %-10s %s %-9s %s%s%s\n",
+			mod.Name, mod.Type, statusIcon, statusLabel, target, group, extra)
+	}
+}
+
+func runSyncBack() {
+	repoRoot := findRoot()
+	modulesDir := filepath.Join(repoRoot, "modules")
+	allMods, err := core.LoadAllModules(modulesDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	allMods = core.FilterByPlatform(allMods)
+
+	synced := 0
+	for _, mod := range allMods {
+		if mod.Type == core.TypeTool || mod.Strategy == core.StrategyAppend {
+			continue
+		}
+
+		target := core.ExpandPath(mod.Target)
+		source := filepath.Join(repoRoot, mod.Source)
+
+		// Only sync if target exists and is NOT already our symlink
+		status := core.CheckLinkStatus(mod, repoRoot)
+		if status != core.StatusConflict {
+			continue
+		}
+
+		if dryRun {
+			fmt.Printf("[dry-run] would sync: %s → %s\n", target, source)
+			synced++
+			continue
+		}
+
+		// Copy from machine to repo
+		info, err := os.Stat(target)
+		if err != nil {
+			continue
+		}
+
+		if info.IsDir() {
+			// Recursive directory sync: remove old repo dir, copy machine dir
+			if err := os.RemoveAll(source); err != nil {
+				fmt.Printf("  error clearing %s: %v\n", source, err)
+				continue
+			}
+			if err := copyDirRecursive(target, source); err != nil {
+				fmt.Printf("  error syncing dir %s: %v\n", mod.Name, err)
+				continue
+			}
+			fmt.Printf("  ✓ synced (dir): %s → %s\n", mod.Name, mod.Source)
+			synced++
+			continue
+		}
+
+		data, err := os.ReadFile(target)
+		if err != nil {
+			fmt.Printf("  error reading %s: %v\n", target, err)
+			continue
+		}
+
+		// Ensure source directory exists
+		os.MkdirAll(filepath.Dir(source), 0755)
+
+		if err := os.WriteFile(source, data, info.Mode()); err != nil {
+			fmt.Printf("  error writing %s: %v\n", source, err)
+			continue
+		}
+
+		fmt.Printf("  ✓ synced: %s → %s\n", mod.Name, mod.Source)
+		synced++
+	}
+
+	if synced == 0 {
+		fmt.Println("Nothing to sync (all configs are either linked or missing)")
+	} else if dryRun {
+		fmt.Printf("\n[dry-run] Would sync %d module(s). Run without --dry-run to execute.\n", synced)
+	} else {
+		fmt.Printf("\nSynced %d module(s). Review with 'git diff' then commit.\n", synced)
+	}
+}
+
+// copyDirRecursive copies a directory tree from src to dst
+func copyDirRecursive(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		// Skip symlinks inside the directory (don't follow them)
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(dstPath, data, info.Mode())
+	})
+}
+
+func runLinkDirect(moduleNames []string) {
+	repoRoot := findRoot()
+	modulesDir := filepath.Join(repoRoot, "modules")
+	allMods, err := core.LoadAllModules(modulesDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	modMap := make(map[string]core.Module)
+	for _, m := range allMods {
+		modMap[m.Name] = m
+	}
+
+	state, _ := core.LoadState()
+
+	for _, name := range moduleNames {
+		mod, ok := modMap[name]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "  ✗ unknown module: %s\n", name)
+			continue
+		}
+
+		if mod.Type == core.TypeTool {
+			fmt.Fprintf(os.Stderr, "  ✗ %s is a tool, use TUI to install\n", name)
+			continue
+		}
+
+		status := core.CheckLinkStatus(mod, repoRoot)
+
+		if dryRun {
+			switch status {
+			case core.StatusLinked:
+				fmt.Printf("  [dry-run] %s: already linked, skip\n", name)
+			case core.StatusMissing:
+				fmt.Printf("  [dry-run] %s: would create symlink %s → %s\n",
+					name, core.ExpandPath(mod.Target), filepath.Join(repoRoot, mod.Source))
+			case core.StatusConflict:
+				fmt.Printf("  [dry-run] %s: would backup existing + create symlink\n", name)
+			case core.StatusStale:
+				fmt.Printf("  [dry-run] %s: would update stale symlink\n", name)
+			}
+			continue
+		}
+
+		if status == core.StatusLinked {
+			fmt.Printf("  ✓ %s: already linked\n", name)
+			continue
+		}
+
+		doBackup := status == core.StatusConflict
+		var result core.LinkResult
+		if mod.Strategy == core.StrategyAppend {
+			result = core.Append(mod, repoRoot)
+		} else {
+			result = core.Link(mod, repoRoot, doBackup)
+		}
+
+		if result.Error != nil {
+			fmt.Fprintf(os.Stderr, "  ✗ %s: %v\n", name, result.Error)
+		} else {
+			fmt.Printf("  ✓ %s: linked\n", name)
+			if result.BackupPath != "" {
+				fmt.Printf("    (backup: %s)\n", result.BackupPath)
+			}
+			state.SetInstalled(name, core.ModuleState{
+				Strategy:   string(mod.Strategy),
+				TargetPath: core.ExpandPath(mod.Target),
+				BackupPath: result.BackupPath,
+			})
+
+			// Execute post_link hook
+			if mod.Hooks.PostLink != "" {
+				fmt.Printf("    running post_link hook...\n")
+				hookCmd := exec.Command("bash", "-c", mod.Hooks.PostLink)
+				hookCmd.Stdout = os.Stdout
+				hookCmd.Stderr = os.Stderr
+				if err := hookCmd.Run(); err != nil {
+					fmt.Fprintf(os.Stderr, "    hook warning: %v\n", err)
+				} else {
+					fmt.Printf("    hook done ✓\n")
+				}
+			}
+		}
+	}
+
+	state.Save()
+}
+
+func printHelp() {
+	fmt.Println(`dotsetup - Dotfile environment manager
+
+Usage:
+  dotsetup              Launch interactive TUI
+  dotsetup status       Show all module status
+  dotsetup link <mod>   Link specific modules (non-interactive)
+  dotsetup rollback <mod>  Unlink + restore backup for modules
+  dotsetup sync-back    Copy machine configs back to repo
+  dotsetup help         Show this help
+  dotsetup version      Show version
+
+Flags:
+  --dry-run, -n    Show what would happen without executing
+
+TUI Controls:
+  ↑/↓, j/k    Navigate
+  Space        Toggle selection
+  Enter        Apply changes
+  a            Select all (independent modules)
+  n            Deselect all
+  q/Esc        Back / Quit
+
+Examples:
+  dotsetup status                    # Check what's linked/installed
+  dotsetup link vim starship         # Link specific configs
+  dotsetup link vim --dry-run        # Preview without executing
+  dotsetup sync-back                 # Sync machine configs to repo
+  dotsetup sync-back --dry-run       # Preview what would sync
+  dotsetup rollback vim              # Restore vim config from backup`)
+}
+
+func runRollback(moduleNames []string) {
+	state, err := core.LoadState()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading state: %v\n", err)
+		os.Exit(1)
+	}
+
+	repoRoot := findRoot()
+	modulesDir := filepath.Join(repoRoot, "modules")
+	allMods, err := core.LoadAllModules(modulesDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	modMap := make(map[string]core.Module)
+	for _, m := range allMods {
+		modMap[m.Name] = m
+	}
+
+	rolled := 0
+	for _, name := range moduleNames {
+		mod, ok := modMap[name]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "  ✗ unknown module: %s\n", name)
+			continue
+		}
+
+		ms, installed := state.Modules[name]
+		if !installed {
+			fmt.Fprintf(os.Stderr, "  ✗ %s: not managed by dotsetup\n", name)
+			continue
+		}
+
+		target := core.ExpandPath(mod.Target)
+
+		if dryRun {
+			if ms.BackupPath != "" {
+				fmt.Printf("  [dry-run] %s: would unlink + restore from %s\n", name, ms.BackupPath)
+			} else {
+				fmt.Printf("  [dry-run] %s: would unlink (no backup to restore)\n", name)
+			}
+			rolled++
+			continue
+		}
+
+		// Step 1: Unlink (remove symlink)
+		if err := core.Unlink(mod); err != nil {
+			fmt.Fprintf(os.Stderr, "  ✗ %s: unlink failed: %v\n", name, err)
+			continue
+		}
+
+		// Step 2: Restore backup if exists
+		if ms.BackupPath != "" {
+			if _, err := os.Stat(ms.BackupPath); err == nil {
+				if err := core.Restore(ms.BackupPath, target); err != nil {
+					fmt.Fprintf(os.Stderr, "  ⚠ %s: unlinked but restore failed: %v\n", name, err)
+				} else {
+					fmt.Printf("  ✓ %s: restored from backup\n", name)
+				}
+			} else {
+				fmt.Printf("  ⚠ %s: unlinked (backup not found at %s)\n", name, ms.BackupPath)
+			}
+		} else {
+			fmt.Printf("  ✓ %s: unlinked (no backup)\n", name)
+		}
+
+		// Step 3: Remove from state
+		state.SetUninstalled(name)
+		rolled++
+	}
+
+	if rolled > 0 && !dryRun {
+		state.Save()
+		fmt.Printf("\nRolled back %d module(s).\n", rolled)
+	} else if dryRun && rolled > 0 {
+		fmt.Printf("\n[dry-run] Would roll back %d module(s).\n", rolled)
+	}
+}
