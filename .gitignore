@@ -1,5 +1,5 @@
 test_function/
 
-# dotsetup binary
-dotsetup
-dist/
+# dotsetup binary (only the root-level compiled binary, not cmd/dotsetup/ source)
+/dotsetup
+/dist/

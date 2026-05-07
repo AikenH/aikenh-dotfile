@@ -113,11 +113,11 @@ modules:
     tags: [file, essential]
     depends_on: []
     install:
-      check: "bat --version"
+      check: "bat --version 2>/dev/null || batcat --version 2>/dev/null"
       apt: "bat"
       brew: "bat"
     version:
-      command: "bat --version | head -1"
+      command: "bat --version 2>/dev/null || batcat --version 2>/dev/null"
       pattern: 'bat (\d+\.\d+\.\d+)'
 
   - name: yazi
@@ -159,8 +159,9 @@ modules:
     depends_on: []
     install:
       check: "delta --version"
-      apt: "git-delta"
       brew: "git-delta"
+      github_release: "dandavison/delta"
+      asset_pattern: "delta-{version}-{arch}-unknown-linux-musl.tar.gz"
     version:
       command: "delta --version"
       pattern: 'delta (\d+\.\d+\.\d+)'

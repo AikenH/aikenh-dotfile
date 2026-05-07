@@ -120,6 +120,68 @@ modules:
     hooks:
       post_link: ""
 
+  - name: fzf-config
+    type: config
+    description: "FZF + fd + bat shell integration"
+    source: shell/fzf.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [fzf, fd, bat]
+    guard: "# FZF Integration Flag"
+    tags: [shell, search, essential]
+    hooks:
+      post_link: ""
+
+  - name: git-fzf
+    type: config
+    description: "Git + FZF interactive functions (gfb/gfc/gfs)"
+    source: shell/git-fzf.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [fzf, git-delta]
+    guard: "# Git-FZF Functions Flag"
+    tags: [shell, git, essential]
+    hooks:
+      post_link: ""
+
+  - name: aliases
+    type: config
+    description: "Common shell aliases (cl/g/ltr/nv...)"
+    source: shell/aliases.sh
+    target: ~/.zshrc
+    strategy: append
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    guard: "# Common Aliases Flag"
+    tags: [shell, essential]
+    hooks:
+      post_link: ""
+
+  - name: git-delta-config
+    type: config
+    description: "Git pager/delta/merge config"
+    source: git/gitconfig-delta
+    target: ~/.config/git/delta.gitconfig
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin, linux]
+    group: ""
+    optional: true
+    depends_on: [git-delta]
+    tags: [git, essential]
+    hooks:
+      post_link: "git config --global include.path ~/.config/git/delta.gitconfig 2>/dev/null || true"
+
   # ─── Editors (independent, can coexist) ─────────────────────────────────
   - name: vim
     type: config

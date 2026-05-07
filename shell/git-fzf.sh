@@ -1,0 +1,65 @@
+# ─── Git + FZF interactive functions ────────────────────────────────────
+# Requires: fzf, git, delta
+# Append guard: # Git-FZF Functions Flag
+#
+# gfb - fuzzy switch branch
+# gfc - fuzzy show commit
+# gfs - fuzzy pick changed file
+
+if command -v fzf >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+  gfb() {
+    git rev-parse --git-dir >/dev/null 2>&1 || return 1
+
+    local branch
+    branch=$(
+      git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads refs/remotes \
+        | grep -v '/HEAD$' \
+        | awk '!seen[$0]++' \
+        | fzf --prompt='branch> ' \
+            --preview 'git log --oneline --decorate --color=always -n 20 {}' \
+            --preview-window=right,60%
+    ) || return
+
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+      git switch "$branch"
+    else
+      git switch --track "$branch"
+    fi
+  }
+
+  gfc() {
+    git rev-parse --git-dir >/dev/null 2>&1 || return 1
+
+    local entry commit
+    entry=$(
+      git log --format='%h %d %s (%cr)' --abbrev-commit --all \
+        | fzf --prompt='commit> ' \
+            --preview 'git show --color=never "$(printf "%s" {} | cut -d" " -f1)" | delta' \
+            --preview-window=right,70%
+    ) || return
+
+    commit=$(printf '%s\n' "$entry" | cut -d' ' -f1)
+    [ -n "$commit" ] && git show "$commit"
+  }
+
+  gfs() {
+    git rev-parse --git-dir >/dev/null 2>&1 || return 1
+
+    local repo_root file
+    repo_root=$(git rev-parse --show-toplevel) || return 1
+
+    file=$(
+      {
+        git -C "$repo_root" diff --name-only
+        git -C "$repo_root" diff --cached --name-only
+        git -C "$repo_root" ls-files --others --exclude-standard
+      } \
+        | awk 'length($0) && !seen[$0]++' \
+        | REPO_ROOT="$repo_root" fzf --prompt='changed> ' \
+            --preview 'cd "$REPO_ROOT" && if git diff --quiet -- {} && git diff --cached --quiet -- {}; then bat --color=always --style=numbers --line-range=:200 -- {}; else (git diff --color=never -- {}; git diff --cached --color=never -- {}) | delta; fi' \
+            --preview-window=right,70%
+    ) || return
+
+    [ -n "$file" ] && print -r -- "$file"
+  }
+fi

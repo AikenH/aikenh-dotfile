@@ -29,8 +29,9 @@ type InstallResult struct {
 
 // Installer handles tool installation
 type Installer struct {
-	runner   *executor.Runner
-	platform Platform
+	runner     *executor.Runner
+	platform   Platform
+	aptUpdated bool // track whether apt-get update has been run this session
 }
 
 // NewInstaller creates an installer for the current platform
@@ -44,6 +45,19 @@ func NewInstaller(proxy string) *Installer {
 // SetLogFunc sets the real-time log callback
 func (inst *Installer) SetLogFunc(fn func(string)) {
 	inst.runner.LogFunc = fn
+}
+
+// ensureAptUpdated runs apt-get update once per installer session
+func (inst *Installer) ensureAptUpdated() {
+	if inst.aptUpdated {
+		return
+	}
+	// Check if apt lists exist; if not, we need to update
+	checkResult := inst.runner.Run("test -d /var/lib/apt/lists/partial && ls /var/lib/apt/lists/ | grep -q '^[^.]'")
+	if checkResult.ExitCode != 0 {
+		inst.runner.Run("sudo apt-get update -qq")
+	}
+	inst.aptUpdated = true
 }
 
 // CheckInstalled returns whether a tool is already installed
@@ -101,6 +115,8 @@ func (inst *Installer) Install(mod Module) InstallResult {
 		installCmd = fmt.Sprintf("brew install %s", mod.Install.Brew)
 
 	case inst.platform.PkgMgr == "apt" && mod.Install.Apt != "":
+		// Ensure apt cache is available
+		inst.ensureAptUpdated()
 		// Add PPA if specified
 		if mod.Install.PPA != "" {
 			ppaCheck := inst.runner.Run(fmt.Sprintf("grep -r %s /etc/apt/sources.list.d/ 2>/dev/null", mod.Install.PPA))

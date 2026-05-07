@@ -1,0 +1,25 @@
+# ─── Git delta + merge config ───────────────────────────────────────────
+# Usage: git config --global include.path ~/path/to/this/file
+# Or symlink to ~/.config/git/delta.gitconfig and include in ~/.gitconfig
+
+[core]
+	filemode = false
+	autocrlf = input
+	quotepath = false
+
+[pager]
+	diff = delta
+	log = delta
+	reflog = delta
+	show = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+
+[merge]
+	conflictstyle = zdiff3
