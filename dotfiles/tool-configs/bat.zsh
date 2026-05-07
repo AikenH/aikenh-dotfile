@@ -1,7 +1,7 @@
 # bat shell integration
 # bat Config Import Flag
 if command -v bat >/dev/null 2>&1; then
-  export BAT_THEME="Catppuccin Mocha"
+  export BAT_THEME="TwoDark"
   alias cat='bat --paging=never'
 
   # If fzf is also installed, enhance its preview (bat handles this side)
