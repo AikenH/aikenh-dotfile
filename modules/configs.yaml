@@ -7,7 +7,7 @@ modules:
   - name: ghostty
     type: config
     description: "Ghostty terminal config + GLSL shaders"
-    source: ghostty
+    source: dotfiles/ghostty
     target: ~/.config/ghostty
     strategy: symlink
     link_mode: directory
@@ -21,7 +21,7 @@ modules:
   - name: wezterm
     type: config
     description: "WezTerm terminal config (Lua-based)"
-    source: wezterm
+    source: dotfiles/wezterm
     target: ~/.config/wezterm
     strategy: symlink
     link_mode: directory
@@ -35,7 +35,7 @@ modules:
   - name: kaku
     type: config
     description: "Kaku editor/terminal config"
-    source: kaku/kaku.lua
+    source: dotfiles/kaku/kaku.lua
     target: ~/.config/kaku/kaku.lua
     strategy: symlink
     link_mode: file
@@ -50,7 +50,7 @@ modules:
   - name: zellij
     type: config
     description: "Zellij multiplexer config + layouts"
-    source: zellij
+    source: dotfiles/zellij
     target: ~/.config/zellij
     strategy: symlink
     link_mode: directory
@@ -64,7 +64,7 @@ modules:
   - name: tmux
     type: config
     description: "Tmux multiplexer config"
-    source: tmux/.tmux.conf.old
+    source: dotfiles/tmux/.tmux.conf.old
     target: ~/.tmux.conf
     strategy: symlink
     link_mode: file
@@ -79,7 +79,7 @@ modules:
   - name: starship-init
     type: config
     description: "Starship prompt shell init (eval starship init zsh)"
-    source: shell/starship.sh
+    source: dotfiles/shell/starship.sh
     target: ~/.zshrc
     strategy: append
     link_mode: file
@@ -96,7 +96,7 @@ modules:
   - name: starship
     type: config
     description: "Starship prompt - minimal style (recommended)"
-    source: starship.toml.pil
+    source: dotfiles/starship.toml.pil
     target: ~/.config/starship.toml
     strategy: symlink
     link_mode: file
@@ -110,7 +110,7 @@ modules:
   - name: starship-powerline
     type: config
     description: "Starship prompt - Catppuccin powerline style"
-    source: starship.toml
+    source: dotfiles/starship.toml
     target: ~/.config/starship.toml
     strategy: symlink
     link_mode: file
@@ -124,7 +124,7 @@ modules:
   - name: proxy
     type: config
     description: "Proxy shell functions (proxyall/proxyoff/proxyon)"
-    source: setproxy.sh
+    source: dotfiles/setproxy.sh
     target: ~/.zshrc
     strategy: append
     link_mode: file
@@ -139,7 +139,7 @@ modules:
   - name: fzf-config
     type: config
     description: "FZF + fd + bat shell integration"
-    source: shell/fzf.sh
+    source: dotfiles/shell/fzf.sh
     target: ~/.zshrc
     strategy: append
     link_mode: file
@@ -155,7 +155,7 @@ modules:
   - name: git-fzf
     type: config
     description: "Git + FZF interactive functions (gfb/gfc/gfs)"
-    source: shell/git-fzf.sh
+    source: dotfiles/shell/git-fzf.sh
     target: ~/.zshrc
     strategy: append
     link_mode: file
@@ -171,7 +171,7 @@ modules:
   - name: aliases
     type: config
     description: "Common shell aliases (cl/g/ltr/nv...)"
-    source: shell/aliases.sh
+    source: dotfiles/shell/aliases.sh
     target: ~/.zshrc
     strategy: append
     link_mode: file
@@ -186,7 +186,7 @@ modules:
   - name: git-delta-config
     type: config
     description: "Git pager/delta/merge config"
-    source: git/gitconfig-delta
+    source: dotfiles/git/gitconfig-delta
     target: ~/.config/git/delta.gitconfig
     strategy: symlink
     link_mode: file
@@ -202,7 +202,7 @@ modules:
   - name: vim
     type: config
     description: "Vim base config (.vimrc) + vim-commentary plugin"
-    source: vim-dot/vimrc_aiken
+    source: dotfiles/vim/vimrc_aiken
     target: ~/.vimrc
     strategy: symlink
     link_mode: file
@@ -216,7 +216,7 @@ modules:
   - name: nvchad
     type: config
     description: "NvChad custom config (keymaps, LSP, UI)"
-    source: nvchad_custom_file/lua/custom
+    source: dotfiles/nvim/lua/custom
     target: ~/.config/nvim/lua/custom
     strategy: symlink
     link_mode: directory
@@ -232,7 +232,7 @@ modules:
   - name: ranger
     type: config
     description: "Ranger file manager config (legacy)"
-    source: ranger/rc.conf
+    source: dotfiles/ranger/rc.conf
     target: ~/.config/ranger/rc.conf
     strategy: symlink
     link_mode: file
@@ -247,7 +247,7 @@ modules:
   - name: claude
     type: config
     description: "Claude Code settings"
-    source: claude/settings.json
+    source: dotfiles/claude/settings.json
     target: ~/.claude/settings.json
     strategy: symlink
     link_mode: file
