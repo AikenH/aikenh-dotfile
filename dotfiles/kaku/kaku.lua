@@ -34,15 +34,52 @@ local function resolve_bundled_config()
   return nil
 end
 
+local function load_bundled_config_without_tab_title_handler(path)
+  local file = io.open(path, 'r')
+  if not file then
+    return nil, 'unable to open bundled config: ' .. path
+  end
+
+  local source = file:read('*all') or ''
+  file:close()
+
+  local start_idx = source:find("wezterm.on('format-tab-title'", 1, true)
+  if start_idx then
+    local next_idx = source:find("\nwezterm.on('format-window-title'", start_idx, true)
+    if not next_idx then
+      return nil, 'unable to isolate bundled format-tab-title handler'
+    end
+    source = source:sub(1, start_idx - 1) .. source:sub(next_idx + 1)
+  end
+
+  local chunk, err = load(source, '@' .. path, 't')
+  if not chunk then
+    return nil, err
+  end
+
+  local ok, loaded = pcall(chunk)
+  if not ok then
+    return nil, loaded
+  end
+
+  return loaded
+end
+
 local config = {}
 local bundled = resolve_bundled_config()
 
 if bundled then
-  local ok, loaded = pcall(dofile, bundled)
-  if ok and type(loaded) == 'table' then
+  local loaded, err = load_bundled_config_without_tab_title_handler(bundled)
+  if type(loaded) == 'table' then
     config = loaded
   else
-    wezterm.log_error('Kaku: failed to load bundled defaults from ' .. bundled)
+    wezterm.log_error('Kaku: patched bundled defaults load failed, falling back to original: ' .. tostring(err))
+    local ok, fallback = pcall(dofile, bundled)
+    if ok and type(fallback) == 'table' then
+      config = fallback
+    else
+      wezterm.log_error('Kaku: failed to load bundled defaults from ' .. bundled)
+    end
   end
 else
   wezterm.log_error('Kaku: bundled defaults not found')
@@ -117,7 +154,7 @@ config.harfbuzz_features = { "calt=1", "liga=1", "dlig=1" }
 -- ═══════════════════════════════════════════════════════════════
 -- Window: opacity, blur, padding
 -- ═══════════════════════════════════════════════════════════════
-config.window_background_opacity = 1
+config.window_background_opacity = 0.9
 config.text_background_opacity = 1.0
 config.macos_window_background_blur = 010
 config.window_padding = {
@@ -168,9 +205,10 @@ config.max_fps = 60
 -- config.color_scheme = 'Fahrenheit'
 -- config.color_scheme = 'Vesper'
 config.color_scheme = 'Vacuous 2 (terminal.sexy)'
+-- config.color_scheme = 'Chameleon (Gogh)'
 
 -- light theme recommand
-config.color_scheme = 'Yousai (terminal.sexy)'
+-- config.color_scheme = 'Rosé Pine Dawn (Gogh)'
 -- ═══════════════════════════════════════════════════════════════
 -- Misc
 -- ═══════════════════════════════════════════════════════════════
@@ -315,5 +353,13 @@ wezterm.on('update-right-status', function(window, pane)
 end)
 
 config.window_decorations = 'RESIZE'
-config.tab_title_show_basename_only = true
+config.tab_title_show_basename_only = false
+
+-- ═══════════════════════════════════════════════════════════════
+-- 加载自定义标签改进
+-- WezTerm 对 format-tab-title 只执行第一个 handler，所以上面加载 bundled
+-- 配置时已经剥离了它的内置 tab formatter，这里由用户配置接管。
+-- ═══════════════════════════════════════════════════════════════
+dofile(wezterm.config_dir .. '/kaku_tab_improvements.lua')
+
 return config
