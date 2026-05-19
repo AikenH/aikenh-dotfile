@@ -22,8 +22,8 @@ style = 'fg:245'
 success_symbol = "[ ](bold fg:#a6e3a1)"
 error_symbol = "[ ](bold fg:#f38ba8)"
 vimcmd_symbol = "[ ](bold fg:#f9e2af)"
-vimcmd_replace_one_symbol = "[](bold fg:#cba6f7)"
-vimcmd_replace_symbol = "[](bold fg:#cba6f7)"
+vimcmd_replace_one_symbol = "[ ](bold fg:#cba6f7)"
+vimcmd_replace_symbol = "[ ](bold fg:#cba6f7)"
 vimcmd_visual_symbol = "[ ](bold fg:#fab387)"
 
 # Disable the package module, hiding it from the prompt completely
@@ -33,9 +33,9 @@ disabled = true
 [git_branch]
 style = "bg:#cba6f7"
 symbol = "󰘬"
-truncation_length = 12
+truncation_length = 9999
 truncation_symbol = ""
-format = " 󰜥 [](bold fg:#cba6f7)[$symbol $branch(:$remote_branch)](fg:#1e1e2e bg:#cba6f7)[](bold fg:#cba6f7)"
+format = " 󰜥 [](bold fg:#cba6f7)[$symbol $branch(:$remote_branch)](fg:#1e1e2e bg:#cba6f7)[ ](bold fg:#cba6f7)"
 
 [git_commit]
 commit_hash_length = 4

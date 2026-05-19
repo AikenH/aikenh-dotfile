@@ -109,7 +109,7 @@ config.font = wezterm.font_with_fallback({
     { family = "Inconsolata LGC Nerd Font Mono", weight = "Regular" },
     "TsangerJinKai03",       -- Chinese fallback
 })
-config.font_size = 14
+config.font_size = 13
 config.line_height = 1.1
 -- Ligatures: calt(contextual alternates) + liga(standard) + dlig(discretionary)
 config.harfbuzz_features = { "calt=1", "liga=1", "dlig=1" }
@@ -117,10 +117,11 @@ config.harfbuzz_features = { "calt=1", "liga=1", "dlig=1" }
 -- ═══════════════════════════════════════════════════════════════
 -- Window: opacity, blur, padding
 -- ═══════════════════════════════════════════════════════════════
-config.window_background_opacity = 0.7
-config.macos_window_background_blur = 20
+config.window_background_opacity = 1
+config.text_background_opacity = 1.0
+config.macos_window_background_blur = 010
 config.window_padding = {
-    left = 10, right = 10, top = 40, bottom = 0,
+    left = 14, right = 14, top = 12, bottom = 0,
 }
 config.window_close_confirmation = 'NeverPrompt'
 
@@ -130,8 +131,9 @@ config.window_close_confirmation = 'NeverPrompt'
 config.tab_bar_at_bottom = true
 config.hide_tab_bar_if_only_one_tab = false
 config.use_fancy_tab_bar = false
-config.tab_max_width = 25
+config.tab_max_width = 28
 config.show_tab_index_in_tab_bar = true
+config.show_new_tab_button_in_tab_bar = false
 
 -- ═══════════════════════════════════════════════════════════════
 -- Keybinding fixes: passthrough Alt+keys to Zellij
@@ -160,9 +162,15 @@ config.max_fps = 60
 
 -- ═══════════════════════════════════════════════════════════════
 -- Colors (dark theme, auto switch)
+-- color theme preview website: https://leaysgur.github.io/wezterm-colorscheme/
 -- ═══════════════════════════════════════════════════════════════
-config.color_scheme = 'Fahrenheit'
+-- dark theme recommand.
+-- config.color_scheme = 'Fahrenheit'
+-- config.color_scheme = 'Vesper'
+config.color_scheme = 'Vacuous 2 (terminal.sexy)'
 
+-- light theme recommand
+config.color_scheme = 'Yousai (terminal.sexy)'
 -- ═══════════════════════════════════════════════════════════════
 -- Misc
 -- ═══════════════════════════════════════════════════════════════
@@ -183,93 +191,129 @@ config.inactive_pane_hsb = {
 -- ═══════════════════════════════════════════════════════════════
 config.hyperlink_rules = wezterm.default_hyperlink_rules()
 
--- ═══════════════════════════════════════════════════════════════
--- Tab Bar: bar.wezterm plugin
--- https://github.com/adriankarlen/bar.wezterm
--- NOTE: must be called AFTER setting color_scheme
--- ═══════════════════════════════════════════════════════════════
-local bar = wezterm.plugin.require("https://github.com/adriankarlen/bar.wezterm")
-bar.apply_to_config(config, {
-    position = "bottom",
-    max_width = 36,
-    modules = {
-        tabs = {
-            active_tab_fg = 4,
-            inactive_tab_fg = 6,
-        },
-        workspace = { enabled = true, color = 8 },
-        leader = { enabled = true, color = 2 },
-        zoom = { enabled = true, color = 4 },
-        pane = { enabled = true, color = 7 },
-        username = { enabled = false },
-        hostname = { enabled = false },
-        clock = { enabled = false },
-        cwd = { enabled = false },  -- we handle cwd on the right side
-        spotify = { enabled = false },
-    },
-})
+local battery_cache = { checked_at = 0, text = "" }
+local function battery_status_text(nf)
+    local now = os.time()
+    if now - battery_cache.checked_at < 30 then
+        return battery_cache.text
+    end
+
+    battery_cache.checked_at = now
+    battery_cache.text = ""
+
+    local ok, stdout = wezterm.run_child_process({ "/usr/bin/pmset", "-g", "batt" })
+    if not ok or type(stdout) ~= "string" then
+        return battery_cache.text
+    end
+
+    local percent = tonumber(stdout:match("(%d+)%%"))
+    if not percent then
+        return battery_cache.text
+    end
+
+    local icon
+    local state = (stdout:match("%%;%s*([^;]+);") or ""):lower()
+    if state == "charging" or state == "finishing charge" then
+        icon = nf.md_battery_charging or nf.md_battery
+    elseif percent > 75 then
+        icon = nf.md_battery or "BAT"
+    elseif percent > 50 then
+        icon = nf.md_battery_70 or nf.md_battery or "BAT"
+    elseif percent > 25 then
+        icon = nf.md_battery_40 or nf.md_battery or "BAT"
+    else
+        icon = nf.md_battery_10 or nf.md_battery_alert or nf.md_battery or "BAT"
+    end
+
+    battery_cache.text = icon .. " " .. percent .. "%"
+    return battery_cache.text
+end
+
+local function compact_path(path, max_len)
+    if type(path) ~= "string" or path == "" then
+        return "~"
+    end
+    if #path <= max_len then
+        return path
+    end
+    return "…" .. path:sub(#path - max_len + 2)
+end
+
+local function push_status_segment(cells, icon, text, accent)
+    if type(text) ~= "string" or text == "" then
+        return
+    end
+    table.insert(cells, { Background = { Color = "#171b24" } })
+    table.insert(cells, { Foreground = { Color = accent } })
+    table.insert(cells, { Text = " " .. icon })
+    table.insert(cells, { Foreground = { Color = "#c8d0dc" } })
+    table.insert(cells, { Text = " " .. text .. " " })
+    table.insert(cells, { Background = { Color = "#11141b" } })
+    table.insert(cells, { Text = " " })
+end
+
+-- Disabled: this third-party plugin currently triggers C stack overflow during
+-- Kaku/WezTerm config reload, preventing saved config changes from applying.
+-- local bar = wezterm.plugin.require("https://github.com/adriankarlen/bar.wezterm")
+-- bar.apply_to_config(config, {
+--     position = "bottom",
+--     max_width = 36,
+--     modules = {
+--         tabs = {
+--             active_tab_fg = 4,
+--             inactive_tab_fg = 6,
+--         },
+--         workspace = { enabled = true, color = 8 },
+--         leader = { enabled = true, color = 2 },
+--         zoom = { enabled = true, color = 4 },
+--         pane = { enabled = true, color = 7 },
+--         username = { enabled = false },
+--         hostname = { enabled = false },
+--         clock = { enabled = false },
+--         cwd = { enabled = false },  -- we handle cwd on the right side
+--         spotify = { enabled = false },
+--     },
+-- })
 
 -- Override Kaku's bundled update-right-status which clears the right status.
 -- Renders: mode | battery | cwd | clock
 wezterm.on('update-right-status', function(window, pane)
     local nf = wezterm.nerdfonts
     local cells = {}
-    local sep = "  "
 
     -- CWD
-    local cwd_uri = pane:get_current_working_dir()
+    local ok_cwd, cwd_uri = pcall(function()
+        return pane:get_current_working_dir()
+    end)
     local cwd = ""
-    if cwd_uri then
+    if ok_cwd and cwd_uri then
         cwd = (cwd_uri.file_path or tostring(cwd_uri)):gsub("^/Users/aikenhong", "~")
     end
+    cwd = compact_path(cwd, 38)
 
-    -- Battery
-    local battery_text = ""
-    for _, b in ipairs(wezterm.battery_info()) do
-        local icon
-        local charge = b.state_of_charge * 100
-        if b.state == "Charging" then
-            icon = nf.md_battery_charging
-        elseif charge > 75 then
-            icon = nf.md_battery
-        elseif charge > 50 then
-            icon = nf.md_battery_70
-        elseif charge > 25 then
-            icon = nf.md_battery_40
-        else
-            icon = nf.md_battery_10
-        end
-        battery_text = icon .. " " .. string.format("%.0f%%", charge)
-    end
+    local battery_text = battery_status_text(nf)
 
     -- Mode indicator
-    local process = pane:get_foreground_process_name() or ""
+    local ok_process, process = pcall(function()
+        return pane:get_foreground_process_name()
+    end)
+    process = ok_process and process or ""
     local basename = process:gsub("(.*[/\\])(.*)", "%2")
     local mode = ""
     if basename == "vim" or basename == "nvim" then
-        mode = " VIM"
+        mode = "VIM"
     elseif basename == "zellij" then
-        mode = "󰕮 ZELLIJ"
+        mode = "ZELLIJ"
     end
 
-    -- Build right status
-    if mode ~= "" then
-        table.insert(cells, { Foreground = { Color = "#f38ba8" } })
-        table.insert(cells, { Text = mode .. sep })
-    end
-
-    if battery_text ~= "" then
-        table.insert(cells, { Foreground = { Color = "#f9e2af" } })
-        table.insert(cells, { Text = battery_text .. sep })
-    end
-
-    table.insert(cells, { Foreground = { Color = "#89b4fa" } })
-    table.insert(cells, { Text = nf.oct_file_directory .. " " .. cwd .. sep })
-
-    table.insert(cells, { Foreground = { Color = "#cba6f7" } })
-    table.insert(cells, { Text = nf.md_calendar_clock .. " " .. wezterm.strftime("%H:%M") .. " " })
+    push_status_segment(cells, nf.md_console_line or ">", mode, "#ff8795")
+    push_status_segment(cells, "", battery_text, "#ffd98a")
+    push_status_segment(cells, nf.oct_file_directory or "DIR", cwd, "#78a8ff")
+    push_status_segment(cells, nf.md_calendar_clock or "CLK", wezterm.strftime("%H:%M"), "#b69cff")
 
     window:set_right_status(wezterm.format(cells))
 end)
 
+config.window_decorations = 'RESIZE'
+config.tab_title_show_basename_only = true
 return config
