@@ -326,3 +326,88 @@ modules:
     version:
       command: "go version"
       pattern: 'go(\d+\.\d+\.\d+)'
+
+  # ─── macOS Window Management (darwin only) ───────────────────────────
+  - name: paneru
+    type: tool
+    description: "Paneru sliding tiling window manager"
+    platforms: [darwin]
+    tags: [macos, window-manager]
+    depends_on: []
+    install:
+      check: "paneru --version"
+      brew: "paneru"
+    version:
+      command: "paneru --version"
+      pattern: 'paneru (\d+\.\d+\.\d+)'
+
+  - name: sketchybar
+    type: tool
+    description: "SketchyBar customizable menu bar (FelixKratz formulae)"
+    platforms: [darwin]
+    tags: [macos, menubar]
+    depends_on: []
+    install:
+      check: "sketchybar --version"
+      script: |
+        brew tap FelixKratz/formulae 2>/dev/null || true
+        brew trust FelixKratz/formulae 2>/dev/null || true
+        brew install sketchybar
+    version:
+      command: "sketchybar --version"
+      pattern: 'sketchybar-v(\d+\.\d+\.\d+)'
+
+  - name: borders
+    type: tool
+    description: "JankyBorders window border highlight (FelixKratz formulae)"
+    platforms: [darwin]
+    tags: [macos, window-manager]
+    depends_on: []
+    install:
+      check: "borders --version 2>/dev/null || test -x /opt/homebrew/bin/borders"
+      script: |
+        brew tap FelixKratz/formulae 2>/dev/null || true
+        brew trust FelixKratz/formulae 2>/dev/null || true
+        brew install borders
+    version:
+      command: "borders --version 2>/dev/null || echo unknown"
+      pattern: '(.+)'
+
+  - name: karabiner-elements
+    type: tool
+    description: "Karabiner-Elements keyboard remapping (CapsLock hyper layer)"
+    platforms: [darwin]
+    tags: [macos, keyboard]
+    depends_on: []
+    install:
+      check: "test -d '/Applications/Karabiner-Elements.app'"
+      script: "brew install --cask karabiner-elements"
+    version:
+      command: "defaults read org.pqrs.Karabiner-Elements 2>/dev/null | grep -m1 'version' || echo unknown"
+      pattern: '(.+)'
+
+  - name: jq
+    type: tool
+    description: "jq JSON processor (needed by sketchybar plugins)"
+    platforms: [darwin]
+    tags: [macos, shell]
+    depends_on: []
+    install:
+      check: "jq --version"
+      brew: "jq"
+    version:
+      command: "jq --version"
+      pattern: 'jq-(\d+\.\d+\.\d+)'
+
+  - name: go-mono-nerd-font
+    type: tool
+    description: "GoMono Nerd Font (sketchybar icons)"
+    platforms: [darwin]
+    tags: [macos, font]
+    depends_on: []
+    install:
+      check: "test -f ~/Library/Fonts/GoMonoNerdFont-Regular.ttf"
+      script: "brew install --cask font-go-mono-nerd-font"
+    version:
+      command: "ls ~/Library/Fonts/GoMonoNerdFont-Regular.ttf 2>/dev/null && echo installed || echo missing"
+      pattern: '(installed)'

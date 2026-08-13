@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Load colors & icons (respect persisted theme from state file)
+export CURRENT_THEME=$(cat "$HOME/.cache/sketchybar_theme" 2>/dev/null || echo "dark")
+source "$HOME/.config/sketchybar/colors.sh"
+source "$HOME/.config/sketchybar/icons.sh"
+
+ITEM_DIR="$HOME/.config/sketchybar/items"
+PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
+
+FONT="GoMono Nerd Font"
+
+# General bar appearance (Clean solid bar with mouse_events enabled)
+bar=(
+  height=36
+  color=$BAR_COLOR
+  shadow=off
+  position=top
+  topmost=on
+  sticky=on
+  padding_right=12
+  padding_left=12
+  corner_radius=8
+  y_offset=4
+  margin=8
+  blur_radius=18
+  display=all
+  mouse_events=on
+)
+
+sketchybar --bar "${bar[@]}"
+
+# Global defaults
+defaults=(
+  icon.font="$FONT:Bold:14.0"
+  icon.color=$ICON_COLOR
+  label.font="$FONT:Bold:13.0"
+  label.color=$LABEL_COLOR
+  background.corner_radius=6
+  background.height=26
+)
+
+sketchybar --default "${defaults[@]}"
+
+# Load items in order (Left -> Right)
+source "$ITEM_DIR/apple.sh"
+source "$ITEM_DIR/spaces.sh"
+source "$ITEM_DIR/front_app.sh"
+
+# Right side items with 14px pill gaps.
+# sketchybar right: FIRST added = RIGHTMOST. Desired left->right order:
+#   zen | theme | battery | volume | calendar
+# => add order (right->left): calendar, volume, battery, zen/theme
+source "$ITEM_DIR/calendar.sh"
+
+sketchybar --add item spacer_right_1 right \
+           --set spacer_right_1 width=14 background.drawing=off label.drawing=off icon.drawing=off
+
+source "$ITEM_DIR/volume.sh"
+
+sketchybar --add item spacer_right_2 right \
+           --set spacer_right_2 width=14 background.drawing=off label.drawing=off icon.drawing=off
+
+source "$ITEM_DIR/battery.sh"
+
+sketchybar --add item spacer_right_3 right \
+           --set spacer_right_3 width=14 background.drawing=off label.drawing=off icon.drawing=off
+
+source "$ITEM_DIR/zen_theme.sh"
+
+sketchybar --update

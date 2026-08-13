@@ -257,3 +257,60 @@ modules:
     tags: [dev-tools]
     hooks:
       post_link: ""
+
+  # ─── macOS Window Management (darwin only) ────────────────────────────
+  - name: paneru
+    type: config
+    description: "Paneru sliding tiling window manager"
+    source: dotfiles/paneru/paneru.toml
+    target: ~/.config/paneru/paneru.toml
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin]
+    group: ""
+    optional: true
+    tags: [macos, window-manager]
+    hooks:
+      post_link: ""
+
+  - name: sketchybar
+    type: config
+    description: "SketchyBar custom menu bar (Catppuccin + vintage themes, zen mode, calendar popup)"
+    source: dotfiles/sketchybar
+    target: ~/.config/sketchybar
+    strategy: symlink
+    link_mode: directory
+    platforms: [darwin]
+    group: ""
+    optional: true
+    tags: [macos, menubar]
+    hooks:
+      post_link: "chmod +x ~/.config/sketchybar/items/*.sh ~/.config/sketchybar/plugins/*.sh 2>/dev/null || true"
+
+  - name: borders
+    type: config
+    description: "JankyBorders active window border highlight"
+    source: dotfiles/borders/bordersrc
+    target: ~/.config/borders/bordersrc
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin]
+    group: ""
+    optional: true
+    tags: [macos, window-manager]
+    hooks:
+      post_link: ""
+
+  - name: karabiner-paneru
+    type: config
+    description: "Karabiner CapsLock hyper layer for Paneru shortcuts"
+    source: dotfiles/karabiner/caps-paneru.json
+    target: ~/.config/karabiner/assets/complex_modifications/caps-paneru.json
+    strategy: symlink
+    link_mode: file
+    platforms: [darwin]
+    group: ""
+    optional: true
+    tags: [macos, keyboard]
+    hooks:
+      post_link: ""

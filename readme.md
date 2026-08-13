@@ -347,6 +347,10 @@ The profile appears automatically in the Profile Selection screen on first run.
 | Git delta | `dotfiles/git/gitconfig-delta` | `~/.config/git/delta.gitconfig` |
 | Ranger | `dotfiles/ranger/rc.conf` | `~/.config/ranger/rc.conf` |
 | Claude Code | `dotfiles/claude/settings.json` | `~/.claude/settings.json` |
+| Paneru (WM) | `dotfiles/paneru/paneru.toml` | `~/.config/paneru/paneru.toml` |
+| SketchyBar | `dotfiles/sketchybar/` | `~/.config/sketchybar/` |
+| Borders | `dotfiles/borders/bordersrc` | `~/.config/borders/bordersrc` |
+| Karabiner (Paneru layer) | `dotfiles/karabiner/caps-paneru.json` | `~/.config/karabiner/assets/complex_modifications/` |
 | Shell aliases | `dotfiles/shell/aliases.sh` | `~/.zshrc` (append) |
 | FZF integration | `dotfiles/shell/fzf.sh` | `~/.zshrc` (append) |
 | Git-FZF functions | `dotfiles/shell/git-fzf.sh` | `~/.zshrc` (append) |
@@ -355,7 +359,41 @@ The profile appears automatically in the Profile Selection screen on first run.
 
 ---
 
-## Windows / Platform-specific
+## macOS Window Management (Paneru + SketchyBar)
+
+A sliding-tiling window-manager stack for macOS (darwin-only modules, hidden on Linux).
+
+- **Paneru** — Niri-style sliding tiling WM. Windows live on an infinite horizontal strip; opening a new window never resizes existing ones. Each display has its own strip.
+- **SketchyBar** — custom menu bar: Catppuccin Mocha (dark) / Vintage Paper (light) themes, frosted-glass blur, workspace badges with per-app clickable pills, month-calendar popup, Zen mode, light/dark toggle.
+- **Borders (JankyBorders)** — active window border highlight (`#b3e1a7` sage green).
+- **Karabiner** — CapsLock acts as a hyper key (Cmd+Ctrl+Alt) for Paneru shortcuts; `CapsLock + hjkl` = arrows, `CapsLock + 1-0-=` = F1-F12.
+
+### Enable
+
+In the TUI (`./dotsetup`):
+1. **Link Configs** → toggle `paneru`, `sketchybar`, `borders`, `karabiner-paneru` → `Enter`.
+2. **Install Tools** → toggle `paneru`, `sketchybar`, `borders`, `karabiner-elements`, `jq`, `go-mono-nerd-font` → `Enter`.
+
+### Post-install (manual, one-time)
+
+- **Permissions**: add `/opt/homebrew/bin/paneru`, `/opt/homebrew/bin/sketchybar`, `/opt/homebrew/bin/borders` to **System Settings → Privacy & Security → Accessibility**; add `paneru` to **Input Monitoring** (hotkeys). Add via `+` → `Cmd+Shift+G` → `/opt/homebrew/bin/`.
+- **Karabiner**: open Karabiner-Elements → Complex Modifications → Add rule → enable the `CAPSLOCK + paneru` and `CAPSLOCK + hjkl` rules.
+- **Services** (add to `~/.zshrc`):
+  ```zsh
+  alias wm-start='paneru start && brew services start borders && brew services start sketchybar'
+  alias wm-stop='paneru stop; brew services stop borders; brew services stop sketchybar'
+  alias wm-restart='paneru restart && brew services restart borders && brew services restart sketchybar'
+  alias wm-status='paneru query active --json >/dev/null 2>&1 && echo "paneru: RUNNING" || echo "paneru: STOPPED"; brew services list | grep -E "borders|sketchybar"'
+  ```
+- **Display arrangement**: arrange external displays **above/below** (not side-by-side) in System Settings → Displays → Arrange, to avoid macOS relocating off-screen windows between displays.
+
+### Common issues
+
+- **A screen / window not managed after reboot**: Paneru's AX window discovery can race on macOS 26; run `paneru restart` (or `wm-restart`) to re-discover.
+- **App reopened after closing loses management**: same macOS 26 AX race — `paneru restart` recovers.
+
+---
+
 
 Windows configs are in `platform/windows/` and are **not managed by dotsetup** (manual setup):
 

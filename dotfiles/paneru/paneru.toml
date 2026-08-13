@@ -1,0 +1,64 @@
+# Paneru configuration
+
+[options]
+focus_follows_mouse = false
+mouse_follows_focus = false
+animation_speed = 12
+preset_column_widths = [0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
+window_resize_cycle = false
+create_virtual_workspace_automatically = true
+reap_empty_workspaces = true
+
+[padding]
+top = 12
+bottom = 12
+
+[swipe]
+continuous = false
+deceleration = 0.4
+sensitivity = 0.4
+
+[swipe.gesture]
+fingers_count = 4
+direction = "Natural"
+
+[swipe.scroll]
+modifier = "alt"
+
+[decorations]
+workspace_menu_status = true
+workspace_popup_status = true
+
+[decorations.inactive.dim]
+opacity_night = -0.08
+
+[bindings]
+# 左右切换窗口
+window_focus_west = "cmd + ctrl + alt - ,"
+window_focus_east = "cmd + ctrl + alt - ."
+# 交换窗口
+window_swap_west = "cmd + ctrl + alt + shift - ,"
+window_swap_east = "cmd + ctrl + alt + shift - ."
+# 窗口宽度
+window_resize = "cmd + ctrl + alt - ]"
+window_shrink = "cmd + ctrl + alt - ["
+# 全宽 / 托管切换
+window_fullwidth = "cmd + ctrl + alt - '"
+window_manage = "cmd + ctrl + alt - ;"
+# 退出
+# 虚拟工作区切换（CapsLock+w 下一个，CapsLock+Shift+w 上一个）
+window_virtual_south = "cmd + ctrl + alt - w"
+window_virtual_north = "cmd + ctrl + alt + shift - w"
+# 搬窗口到虚拟工作区并跟随（CapsLock+m 下搬，CapsLock+Shift+m 上搬）
+window_virtualmove_south = "cmd + ctrl + alt - m"
+window_virtualmove_north = "cmd + ctrl + alt + shift - m"
+# 跨显示器
+window_nextdisplay = "cmd + ctrl + alt - n"
+mouse_nextdisplay = "cmd + ctrl + alt + shift - n"
+quit = "cmd + ctrl + alt - q"
+
+[windows.all]
+title = ".*"
+horizontal_padding = 6
+vertical_padding = 0
+width = 0.5
