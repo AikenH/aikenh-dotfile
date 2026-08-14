@@ -25,7 +25,7 @@ sketchybar --add item calendar_icon right \
            --set calendar_icon \
                icon="󰥔" \
                icon.font="GoMono Nerd Font:Bold:15.0" \
-               icon.color=$BAR_COLOR \
+               icon.color=$BAR_SOLID \
                icon.padding_left=6 \
                icon.padding_right=6 \
                label.drawing=off \
@@ -44,7 +44,7 @@ sketchybar --subscribe calendar_icon mouse.entered mouse.exited
 sketchybar --add bracket calendar_bracket calendar_icon calendar_label \
            --set calendar_bracket \
                background.drawing=on \
-               background.color=$BAR_COLOR \
+               background.color=$BAR_SOLID \
                background.height=26 \
                background.corner_radius=8 \
                background.border_width=2 \

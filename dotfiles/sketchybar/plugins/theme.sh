@@ -38,12 +38,12 @@ fi
 
 # Right-side brackets: pill body = bar color (matching theme bg),
 # icon chip keeps its accent color, text = foreground.
-sketchybar --set volume_icon background.color=$BLUE icon.color=$BAR_COLOR
-sketchybar --set battery_icon background.color=$GREEN icon.color=$BAR_COLOR
-sketchybar --set calendar_icon background.color=$MAGENTA icon.color=$BAR_COLOR
-sketchybar --set volume_bracket background.border_color=$BLUE background.color=$BAR_COLOR
-sketchybar --set battery_bracket background.border_color=$GREEN background.color=$BAR_COLOR
-sketchybar --set calendar_bracket background.border_color=$MAGENTA background.color=$BAR_COLOR
+sketchybar --set volume_icon background.color=$BLUE icon.color=$BAR_SOLID
+sketchybar --set battery_icon background.color=$GREEN icon.color=$BAR_SOLID
+sketchybar --set calendar_icon background.color=$MAGENTA icon.color=$BAR_SOLID
+sketchybar --set volume_bracket background.border_color=$BLUE background.color=$BAR_SOLID
+sketchybar --set battery_bracket background.border_color=$GREEN background.color=$BAR_SOLID
+sketchybar --set calendar_bracket background.border_color=$MAGENTA background.color=$BAR_SOLID
 
 # Text labels follow the theme foreground (fix: explicit per-item, not just default)
 sketchybar --set volume_label label.color=$WHITE
@@ -67,7 +67,7 @@ for r in 1 2 3 4 5 6; do
 done
 
 # Zen + theme buttons: body matches bar, icons stay accent
-sketchybar --set zen_button background.color=$BAR_COLOR icon.color=$MAGENTA
-sketchybar --set theme_button background.color=$BAR_COLOR
+sketchybar --set zen_button background.color=$BAR_SOLID icon.color=$MAGENTA
+sketchybar --set theme_button background.color=$BAR_SOLID
 
 echo "theme -> $NEW"

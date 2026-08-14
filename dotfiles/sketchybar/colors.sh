@@ -10,7 +10,8 @@ dark_yellow=0xfff9e2af
 dark_orange=0xfffab387
 dark_magenta=0xffcba6f7
 dark_grey=0xff6c7086
-dark_bar=0xcc1e1e2e          # 80% (frosted)
+dark_bar=0xcc1e1e2e          # bar 80% (frosted)
+dark_bar_solid=0xff1e1e2e    # bar solid (opaque, for pills/buttons)
 dark_bg1=0xb3313244          # 70%
 dark_bg2=0xb345475a          # 70%
 dark_popup_bg=0xe61e1e2e     # 90%
@@ -27,10 +28,11 @@ light_yellow=0xffd6aa41       # chart-4 yellow
 light_orange=0xffcc6632       # chart-10 orange
 light_magenta=0xff904cb2      # chart-6 magenta
 light_grey=0xff7d6b56         # muted-foreground
-light_bar=0xccf4f0e5          # background @80% (frosted)
-light_bg1=0x99ebe4d7          # muted @60%
-light_bg2=0xb3e1d7c2          # secondary @70%
-light_popup_bg=0xe6fffbf4     # card @90%
+light_bar=0x80f4f0e5          # bar @50% (frosted, transparent)
+light_bar_solid=0xfff4f0e5   # bar solid (opaque, for pills/buttons)
+light_bg1=0xffebe4d7          # muted (opaque)
+light_bg2=0xffe1d7c2          # secondary (opaque)
+light_popup_bg=0xccfffbf4     # card @80% (keep readable)
 
 # ── 当前主题状态（默认 dark）──
 export CURRENT_THEME="${CURRENT_THEME:-dark}"
@@ -41,13 +43,13 @@ apply_palette() {
     export BLACK=$light_black WHITE=$light_white RED=$light_red GREEN=$light_green
     export BLUE=$light_blue YELLOW=$light_yellow ORANGE=$light_orange
     export MAGENTA=$light_magenta GREY=$light_grey
-    export BAR_COLOR=$light_bar BACKGROUND_1=$light_bg1 BACKGROUND_2=$light_bg2
+    export BAR_COLOR=$light_bar BAR_SOLID=$light_bar_solid BACKGROUND_1=$light_bg1 BACKGROUND_2=$light_bg2
     export POPUP_BACKGROUND_COLOR=$light_popup_bg
   else
     export BLACK=$dark_black WHITE=$dark_white RED=$dark_red GREEN=$dark_green
     export BLUE=$dark_blue YELLOW=$dark_yellow ORANGE=$dark_orange
     export MAGENTA=$dark_magenta GREY=$dark_grey
-    export BAR_COLOR=$dark_bar BACKGROUND_1=$dark_bg1 BACKGROUND_2=$dark_bg2
+    export BAR_COLOR=$dark_bar BAR_SOLID=$dark_bar_solid BACKGROUND_1=$dark_bg1 BACKGROUND_2=$dark_bg2
     export POPUP_BACKGROUND_COLOR=$dark_popup_bg
   fi
   export ICON_COLOR=$WHITE

@@ -787,6 +787,126 @@
             ]
           }
         ]
+      },
+      {
+        "type": "basic",
+        "conditions": [
+          {
+            "name": "caps_lock pressed",
+            "type": "variable_if",
+            "value": 1
+          }
+        ],
+        "from": {
+          "key_code": "w",
+          "modifiers": {
+            "mandatory": [
+              "shift"
+            ],
+            "optional": [
+              "any"
+            ]
+          }
+        },
+        "to": [
+          {
+            "key_code": "w",
+            "modifiers": [
+              "left_command",
+              "left_control",
+              "left_option",
+              "left_shift"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "basic",
+        "conditions": [
+          {
+            "name": "caps_lock pressed",
+            "type": "variable_if",
+            "value": 1
+          }
+        ],
+        "from": {
+          "key_code": "m",
+          "modifiers": {
+            "mandatory": [
+              "shift"
+            ],
+            "optional": [
+              "any"
+            ]
+          }
+        },
+        "to": [
+          {
+            "key_code": "m",
+            "modifiers": [
+              "left_command",
+              "left_control",
+              "left_option",
+              "left_shift"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "basic",
+        "conditions": [
+          {
+            "name": "caps_lock pressed",
+            "type": "variable_if",
+            "value": 1
+          }
+        ],
+        "from": {
+          "key_code": "w",
+          "modifiers": {
+            "optional": [
+              "any"
+            ]
+          }
+        },
+        "to": [
+          {
+            "key_code": "w",
+            "modifiers": [
+              "left_command",
+              "left_control",
+              "left_option"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "basic",
+        "conditions": [
+          {
+            "name": "caps_lock pressed",
+            "type": "variable_if",
+            "value": 1
+          }
+        ],
+        "from": {
+          "key_code": "m",
+          "modifiers": {
+            "optional": [
+              "any"
+            ]
+          }
+        },
+        "to": [
+          {
+            "key_code": "m",
+            "modifiers": [
+              "left_command",
+              "left_control",
+              "left_option"
+            ]
+          }
+        ]
       }
     ]
   }

@@ -14,7 +14,7 @@ sketchybar --add item theme_button right \
                icon.padding_right=6 \
                label.drawing=off \
                background.drawing=on \
-               background.color=$BAR_COLOR \
+               background.color=$BAR_SOLID \
                background.corner_radius=6 \
                background.height=26 \
                padding_left=2 \
@@ -31,7 +31,7 @@ sketchybar --add item zen_button right \
                icon.padding_right=6 \
                label.drawing=off \
                background.drawing=on \
-               background.color=$BAR_COLOR \
+               background.color=$BAR_SOLID \
                background.corner_radius=6 \
                background.height=26 \
                padding_left=2 \
